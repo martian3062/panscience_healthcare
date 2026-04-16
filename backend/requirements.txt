@@ -1,0 +1,9 @@
+fastapi
+httpx
+pydantic
+pydantic-settings
+python-multipart
+uvicorn[standard]
+pytest
+pytest-cov
+numpy

@@ -1,0 +1,23 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["app/tests"]
+addopts = [
+  "--cov=app",
+  "--cov-report=term-missing",
+  "--cov-report=xml",
+  "--cov-fail-under=95",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+  "app/tests/*",
+  "app/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

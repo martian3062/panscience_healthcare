@@ -1,0 +1,13 @@
+{
+  "name": "mediamind-assignment",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "typecheck:frontend": "npm --prefix frontend run typecheck",
+    "test:e2e": "npm --prefix frontend run test:e2e",
+    "check": "powershell -ExecutionPolicy Bypass -File ./scripts/check-all.ps1",
+    "dev:all": "powershell -ExecutionPolicy Bypass -File ./scripts/dev-all.ps1"
+  }
+}
