@@ -42,7 +42,7 @@ function hsla(hue: number, saturation: number, lightness: number, alpha = 1) {
   return `hsla(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%, ${alpha})`;
 }
 
-export function sampleMissionGrade(time: number, pointer: PointerState, isDark = false): MissionGrade {
+export function sampleMissionGrade(time: number, pointer: PointerState, isDark = true): MissionGrade {
   const drift = clamp((Math.sin(time * 0.13) + 1) * 0.5 + pointer.x * 0.09, 0, 1);
   const tide = clamp((Math.sin(time * 0.1 + 1.6) + 1) * 0.5 - pointer.y * 0.07, 0, 1);
   const flare = clamp((Math.sin(time * 0.18 + 2.2) + 1) * 0.5, 0, 1);
@@ -56,15 +56,15 @@ export function sampleMissionGrade(time: number, pointer: PointerState, isDark =
 
   const shadowLum = isDark ? 0 : 18;
   const shadowAlpha = isDark ? 0.6 : 0.12;
-  const backLum = isDark ? 8 : 98;
-  const midLum = isDark ? 6 : 95;
-  const bottomLum = isDark ? 4 : 97;
-  const topbarLum = isDark ? 6 : 98;
-  const topbarMidLum = isDark ? 8 : 96;
-  const glassLum = isDark ? 10 : 99;
-  const borderLum = isDark ? 22 : 82;
-  const badgeLum = isDark ? 16 : 95;
-  const starLum = isDark ? 20 : 96;
+  const backLum = isDark ? 2 : 98;
+  const midLum = isDark ? 1 : 95;
+  const bottomLum = isDark ? 1 : 97;
+  const topbarLum = isDark ? 2 : 98;
+  const topbarMidLum = isDark ? 3 : 96;
+  const glassLum = isDark ? 4 : 99;
+  const borderLum = isDark ? 12 : 82;
+  const badgeLum = isDark ? 8 : 95;
+  const starLum = isDark ? 14 : 96;
 
   return {
     star: hsla(mix(aquaHue, solarHue, 0.16), mix(34, 54, hush), mix(starLum, starLum + 4, hush), 1),

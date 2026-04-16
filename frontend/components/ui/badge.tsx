@@ -9,10 +9,10 @@ type BadgeProps = {
 };
 
 const toneClasses = {
-  neutral: "border border-[#dde2e7] bg-white text-foreground",
-  success: "border border-[#d3e9db] bg-[#f1fbf5] text-[#2f7c4a]",
-  warning: "border border-[#eadccf] bg-[#fbf5f0] text-[#9d6f48]",
-  danger: "border border-[#f0d8d8] bg-[#fff5f5] text-[#b15b5b]",
+  neutral: "border border-[var(--mission-panel-border)] bg-[var(--mission-panel-glass)] text-[var(--mission-text-primary)]",
+  success: "border border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400",
+  warning: "border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  danger: "border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400",
 };
 
 export function Badge({ children, tone = "neutral", className }: BadgeProps) {

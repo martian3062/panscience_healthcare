@@ -400,6 +400,7 @@ export function MissionBackground({ pointer, isDark }: { pointer: PointerState, 
         <MissionLightRig pointer={pointer} isDark={isDark} />
         <HiveField
           pointer={pointer}
+          isDark={isDark}
           planeSize={[28, 18]}
           position={[1.2, -0.1, -6.4]}
           scale={5.8}

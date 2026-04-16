@@ -13,6 +13,7 @@ type HiveFieldProps = {
   opacity?: number;
   planeSize: [number, number];
   pointer: PointerState;
+  isDark: boolean;
   position?: [number, number, number];
   scale?: number;
 };
@@ -153,6 +154,7 @@ export function HiveField({
   opacity = 0.8,
   planeSize,
   pointer,
+  isDark,
   position = [0, 0, -5],
   scale = 4.6,
 }: HiveFieldProps) {
@@ -193,7 +195,7 @@ export function HiveField({
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
 
     material.uniforms.uTime.value = time;
     material.uniforms.uResolution.value.set(size.width * state.gl.getPixelRatio(), size.height * state.gl.getPixelRatio());

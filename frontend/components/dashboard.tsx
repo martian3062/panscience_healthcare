@@ -135,7 +135,7 @@ export function Dashboard() {
   const pointerRef = useRef<PointerState>({ x: 0, y: 0 });
   const mediaRef = useRef<HTMLMediaElement | null>(null);
 
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -628,7 +628,7 @@ export function Dashboard() {
 
             <div className="hero-visual js-hero-visual">
               <div className="hero-visual-inner">
-                <FluidScene pointer={pointer} />
+                <FluidScene pointer={pointer} isDark={isDark} />
                 <div className="hero-soft-glow" />
                 <div className="hero-floating-card">
                   <p className="hero-floating-label">Latest ingest</p>
@@ -1067,7 +1067,7 @@ export function Dashboard() {
       {error ? <div className="floating-error">{error}</div> : null}
 
       {ttsState !== "stopped" && (
-        <div className="fixed bottom-6 right-6 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col gap-3 w-72 z-[100] animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-6 right-6 bg-[var(--mission-panel-glass)] backdrop-blur-xl p-4 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-[var(--mission-panel-border)] flex flex-col gap-3 w-72 z-[100] animate-in slide-in-from-bottom-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Now Reading</span>
             <button onClick={() => { window.speechSynthesis.cancel(); setTtsState("stopped"); setActiveChunkId(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
@@ -1098,7 +1098,7 @@ export function Dashboard() {
                 max="100" 
                 value={ttsProgress} 
                 onChange={handleSliderSeek}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+                className="w-full h-2 bg-[var(--mission-panel-border)] rounded-lg appearance-none cursor-pointer accent-[var(--mission-accent)]" 
               />
             </div>
           </div>

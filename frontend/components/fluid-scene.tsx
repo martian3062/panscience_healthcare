@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { HiveField } from "@/components/hive-field";
 import { sampleMissionGrade, type PointerState } from "@/lib/mission-grade";
 
-function HeroDust({ pointer }: { pointer: PointerState }) {
+function HeroDust({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.PointsMaterial>(null);
   const positions = useMemo(() => {
@@ -51,7 +51,7 @@ function HeroDust({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function SignalRibbon({ pointer }: { pointer: PointerState }) {
+function SignalRibbon({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const geometry = useMemo(() => {
@@ -68,7 +68,7 @@ function SignalRibbon({ pointer }: { pointer: PointerState }) {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
 
     if (meshRef.current) {
       meshRef.current.rotation.z = Math.sin(time * 0.45) * 0.08;
@@ -90,7 +90,7 @@ function SignalRibbon({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function OrbitStack({ pointer }: { pointer: PointerState }) {
+function OrbitStack({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const materialRefs = useRef<THREE.MeshBasicMaterial[]>([]);
   const rings = useMemo(
@@ -104,7 +104,7 @@ function OrbitStack({ pointer }: { pointer: PointerState }) {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
     if (groupRef.current) {
       groupRef.current.rotation.y = time * 0.18 + pointer.x * 0.18;
       groupRef.current.rotation.x = -0.28 + pointer.y * 0.14;
@@ -141,7 +141,7 @@ function OrbitStack({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function RelayCore({ pointer }: { pointer: PointerState }) {
+function RelayCore({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const shellRef = useRef<THREE.MeshStandardMaterial>(null);
   const wireRef = useRef<THREE.MeshBasicMaterial>(null);
@@ -165,7 +165,7 @@ function RelayCore({ pointer }: { pointer: PointerState }) {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
 
     if (groupRef.current) {
       groupRef.current.rotation.y = time * 0.28 + pointer.x * 0.22;
@@ -226,14 +226,14 @@ function RelayCore({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function HeroLightRig({ pointer }: { pointer: PointerState }) {
+function HeroLightRig({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const ambientRef = useRef<THREE.AmbientLight>(null);
   const directionalRef = useRef<THREE.DirectionalLight>(null);
   const frontPointRef = useRef<THREE.PointLight>(null);
   const sidePointRef = useRef<THREE.PointLight>(null);
 
   useFrame((state) => {
-    const grade = sampleMissionGrade(state.clock.getElapsedTime(), pointer);
+    const grade = sampleMissionGrade(state.clock.getElapsedTime(), pointer, isDark);
 
     if (ambientRef.current) {
       ambientRef.current.color.setStyle(grade.star);
@@ -262,25 +262,26 @@ function HeroLightRig({ pointer }: { pointer: PointerState }) {
   );
 }
 
-export function FluidScene({ pointer }: { pointer: PointerState }) {
+export function FluidScene({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   return (
     <div className="fluid-scene absolute inset-0" aria-hidden="true">
       <Canvas camera={{ position: [0, 0, 7.1], fov: 34 }} dpr={[1.2, 2]} gl={{ alpha: true, antialias: true }}>
-        <HeroLightRig pointer={pointer} />
+        <HeroLightRig pointer={pointer} isDark={isDark} />
         <HiveField
           pointer={pointer}
+          isDark={isDark}
           planeSize={[8.8, 8.8]}
           position={[0.8, 0.08, -3.3]}
           scale={4.9}
-          opacity={0.86}
-          brightness={1.24}
+          opacity={isDark ? 0.35 : 0.86}
+          brightness={isDark ? 0.4 : 1.24}
           drift={[0.34, 0.18]}
           bias={[0.38, 0.02]}
         />
-        <HeroDust pointer={pointer} />
-        <SignalRibbon pointer={pointer} />
-        <OrbitStack pointer={pointer} />
-        <RelayCore pointer={pointer} />
+        <HeroDust pointer={pointer} isDark={isDark} />
+        <SignalRibbon pointer={pointer} isDark={isDark} />
+        <OrbitStack pointer={pointer} isDark={isDark} />
+        <RelayCore pointer={pointer} isDark={isDark} />
       </Canvas>
     </div>
   );
