@@ -25,52 +25,72 @@
 }
 
 .dark {
-  --mission-body-top: hsla(210, 24%, 12%, 1);
-  --mission-body-mid: hsla(210, 24%, 10%, 1);
-  --mission-body-bottom: hsla(180, 20%, 8%, 1);
-  --mission-topbar-top: hsla(210, 24%, 10%, 0.84);
-  --mission-topbar-bottom: hsla(210, 24%, 12%, 0.58);
-  --mission-overlay-primary: hsla(176, 72%, 68%, 0.05);
-  --mission-overlay-secondary: hsla(56, 82%, 78%, 0.03);
-  --mission-nav-glass: hsla(210, 20%, 14%, 0.68);
-  --mission-panel-glass: hsla(210, 20%, 16%, 0.74);
-  --mission-panel-soft: hsla(210, 20%, 18%, 0.8);
-  --mission-panel-border: hsla(210, 20%, 26%, 0.64);
-  --mission-hero-glow-primary: hsla(176, 76%, 68%, 0.1);
-  --mission-hero-glow-secondary: hsla(196, 60%, 76%, 0.1);
-  --mission-hero-glow-tertiary: hsla(56, 82%, 82%, 0.05);
-  --mission-badge: hsla(176, 40%, 20%, 0.94);
-  --mission-button-shadow: hsla(192, 64%, 46%, 0.1);
-  --mission-shadow: hsla(0, 0%, 0%, 0.4);
+  --mission-body-top: hsla(210, 24%, 8%, 1);
+  --mission-body-mid: hsla(210, 24%, 6%, 1);
+  --mission-body-bottom: hsla(180, 20%, 4%, 1);
+  --mission-topbar-top: hsla(210, 24%, 6%, 0.84);
+  --mission-topbar-bottom: hsla(210, 24%, 8%, 0.58);
+  --mission-overlay-primary: hsla(176, 72%, 68%, 0.03);
+  --mission-overlay-secondary: hsla(56, 82%, 78%, 0.02);
+  --mission-nav-glass: hsla(210, 20%, 10%, 0.7);
+  --mission-panel-glass: hsla(210, 20%, 12%, 0.8);
+  --mission-panel-soft: hsla(210, 20%, 14%, 0.9);
+  --mission-panel-border: hsla(210, 20%, 22%, 0.64);
+  --mission-hero-glow-primary: hsla(176, 76%, 68%, 0.08);
+  --mission-hero-glow-secondary: hsla(196, 60%, 76%, 0.08);
+  --mission-hero-glow-tertiary: hsla(56, 82%, 82%, 0.04);
+  --mission-badge: hsla(176, 40%, 16%, 0.94);
+  --mission-button-shadow: hsla(0, 0%, 0%, 0.3);
+  --mission-shadow: hsla(0, 0%, 0%, 0.6);
 }
 
 .dark html, .dark body {
   background: var(--mission-body-mid);
-  color: #e5e7eb;
-}
-
-.dark .brand-mark, .dark .hero-copy h1, .dark .section-heading h2, .dark .surface-head h3, .dark .solution-body h3, .dark .stat-card strong, .dark .surface-empty-title, .dark .file-name {
-  color: #f3f4f6;
-}
-
-.dark .hero-text, .dark .section-heading p, .dark .solution-body p, .dark .stat-card span, .dark .file-meta, .dark .file-summary, .dark .empty-copy {
-  color: #9ca3af;
-}
-
-.dark .chunk-panel, .dark .chunk-row, .dark .chunk-panel-head, .dark .file-row, .dark .surface-head, .dark .answer-panel, .dark .history-panel {
-  border-color: #374151;
-}
-
-.dark .file-row:hover, .dark .file-row-active {
-  background: hsla(210, 20%, 20%, 1);
-}
-
-.dark .history-row-top p, .dark .chunk-panel-head, .dark .answer-head {
   color: #d1d5db;
 }
 
+.dark .brand-mark, .dark .hero-copy h1, .dark .section-heading h2, .dark .surface-head h3, .dark .solution-body h3, .dark .stat-card strong, .dark .surface-empty-title, .dark .file-name {
+  color: #f9fafb;
+}
+
+.dark .hero-text, .dark .section-heading p, .dark .solution-body p, .dark .stat-card span, .dark .file-meta, .dark .file-summary, .dark .empty-copy, .dark .top-links, .dark .pipeline-chart-head p {
+  color: #9ca3af;
+}
+
+.dark .chunk-panel, .dark .chunk-row, .dark .chunk-panel-head, .dark .file-row, .dark .surface-head, .dark .answer-panel, .dark .history-panel, .dark .pipeline-chart-card {
+  border-color: #374151 !important;
+}
+
+.dark .file-row:hover, .dark .file-row-active {
+  background: hsla(210, 20%, 18%, 1);
+}
+
+.dark .history-row-top p, .dark .chunk-panel-head, .dark .answer-head, .dark .pipeline-chart-head h3 {
+  color: #f3f4f6 !important;
+}
+
 .dark .summary-panel, .dark .citation-row, .dark .history-row {
-  background: hsla(210, 20%, 20%, 0.6);
+  background: hsla(210, 20%, 16%, 0.6);
+}
+
+.dark .site-nav {
+  background: var(--mission-nav-glass);
+}
+
+.dark .surface-panel, .dark .solution-card, .dark .stat-card, .dark .pipeline-chart-card {
+  background: var(--mission-panel-glass) !important;
+}
+
+.dark .hero-visual-inner {
+  background: linear-gradient(155deg, var(--mission-panel-glass), rgba(0, 0, 0, 0.4)) !important;
+  border-color: var(--mission-panel-border) !important;
+}
+
+.dark .mission-background::after {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4)),
+    radial-gradient(circle at 78% 28%, var(--mission-overlay-primary), transparent 22%),
+    radial-gradient(circle at 82% 56%, var(--mission-overlay-secondary), transparent 18%);
 }
 
 html {

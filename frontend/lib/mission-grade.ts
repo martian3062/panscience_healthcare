@@ -42,7 +42,7 @@ function hsla(hue: number, saturation: number, lightness: number, alpha = 1) {
   return `hsla(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%, ${alpha})`;
 }
 
-export function sampleMissionGrade(time: number, pointer: PointerState): MissionGrade {
+export function sampleMissionGrade(time: number, pointer: PointerState, isDark = false): MissionGrade {
   const drift = clamp((Math.sin(time * 0.13) + 1) * 0.5 + pointer.x * 0.09, 0, 1);
   const tide = clamp((Math.sin(time * 0.1 + 1.6) + 1) * 0.5 - pointer.y * 0.07, 0, 1);
   const flare = clamp((Math.sin(time * 0.18 + 2.2) + 1) * 0.5, 0, 1);
@@ -54,31 +54,43 @@ export function sampleMissionGrade(time: number, pointer: PointerState): Mission
   const solarHue = mix(42, 72, flare);
   const lineHue = mix(aquaHue, solarHue, 0.18);
 
+  const shadowLum = isDark ? 0 : 18;
+  const shadowAlpha = isDark ? 0.6 : 0.12;
+  const backLum = isDark ? 8 : 98;
+  const midLum = isDark ? 6 : 95;
+  const bottomLum = isDark ? 4 : 97;
+  const topbarLum = isDark ? 6 : 98;
+  const topbarMidLum = isDark ? 8 : 96;
+  const glassLum = isDark ? 10 : 99;
+  const borderLum = isDark ? 22 : 82;
+  const badgeLum = isDark ? 16 : 95;
+  const starLum = isDark ? 20 : 96;
+
   return {
-    star: hsla(mix(aquaHue, solarHue, 0.16), mix(34, 54, hush), mix(93, 98, hush), 1),
+    star: hsla(mix(aquaHue, solarHue, 0.16), mix(34, 54, hush), mix(starLum, starLum + 4, hush), 1),
     aurora: hsla(auroraHue, 72, 63, 1),
     aqua: hsla(aquaHue, 76, 57, 1),
     mint: hsla(mintHue, 74, 61, 1),
     solar: hsla(solarHue, 86, 72, 1),
-    line: hsla(lineHue, 34, 82, 1),
-    bodyTop: hsla(mix(aquaHue, solarHue, 0.06), 22, 98, 1),
-    bodyMid: hsla(mix(aquaHue, auroraHue, 0.28), 24, 95, 1),
-    bodyBottom: hsla(mix(solarHue, aquaHue, 0.38), 18, 97, 1),
-    topbarTop: hsla(mix(aquaHue, solarHue, 0.08), 20, 98, 0.84),
-    topbarBottom: hsla(mix(aquaHue, auroraHue, 0.28), 22, 96, 0.58),
-    overlayPrimary: hsla(auroraHue, 72, 68, 0.16),
-    overlaySecondary: hsla(solarHue, 82, 78, 0.11),
-    navGlass: hsla(mix(aquaHue, auroraHue, 0.18), 36, 99, 0.68),
-    panelGlass: hsla(mix(aquaHue, solarHue, 0.1), 30, 99, 0.74),
-    panelSoft: hsla(mix(aquaHue, auroraHue, 0.16), 38, 98, 0.8),
-    panelBorder: hsla(mix(aquaHue, solarHue, 0.16), 28, 82, 0.64),
-    heroGlowPrimary: hsla(auroraHue, 76, 68, 0.24),
-    heroGlowSecondary: hsla(aquaHue, 60, 76, 0.22),
-    heroGlowTertiary: hsla(solarHue, 82, 82, 0.14),
-    badge: hsla(auroraHue, 78, 95, 0.94),
+    line: hsla(lineHue, 34, borderLum, 1),
+    bodyTop: hsla(mix(aquaHue, solarHue, 0.06), 22, backLum, 1),
+    bodyMid: hsla(mix(aquaHue, auroraHue, 0.28), 24, midLum, 1),
+    bodyBottom: hsla(mix(solarHue, aquaHue, 0.38), 18, bottomLum, 1),
+    topbarTop: hsla(mix(aquaHue, solarHue, 0.08), 20, topbarLum, 0.84),
+    topbarBottom: hsla(mix(aquaHue, auroraHue, 0.28), 22, topbarMidLum, 0.58),
+    overlayPrimary: hsla(auroraHue, 72, 68, isDark ? 0.04 : 0.16),
+    overlaySecondary: hsla(solarHue, 82, 78, isDark ? 0.03 : 0.11),
+    navGlass: hsla(mix(aquaHue, auroraHue, 0.18), 36, glassLum, 0.68),
+    panelGlass: hsla(mix(aquaHue, solarHue, 0.1), 30, glassLum, 0.74),
+    panelSoft: hsla(mix(aquaHue, auroraHue, 0.16), 38, glassLum - 2, 0.8),
+    panelBorder: hsla(mix(aquaHue, solarHue, 0.16), 28, borderLum, 0.64),
+    heroGlowPrimary: hsla(auroraHue, 76, 68, isDark ? 0.08 : 0.24),
+    heroGlowSecondary: hsla(aquaHue, 60, 76, isDark ? 0.08 : 0.22),
+    heroGlowTertiary: hsla(solarHue, 82, 82, isDark ? 0.04 : 0.14),
+    badge: hsla(auroraHue, 78, badgeLum, 0.94),
     accent: hsla(mix(auroraHue, aquaHue, 0.62), 78, 44, 1),
-    buttonShadow: hsla(aquaHue, 64, 46, 0.24),
-    shadow: hsla(mix(aquaHue, solarHue, 0.2), 24, 18, 0.12),
+    buttonShadow: hsla(aquaHue, 64, 46, isDark ? 0.1 : 0.24),
+    shadow: hsla(mix(aquaHue, solarHue, 0.2), 24, shadowLum, shadowAlpha),
   };
 }
 

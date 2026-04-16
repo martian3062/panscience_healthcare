@@ -40,11 +40,11 @@ export function PipelineChart({ files, chatHistory, selectedFileIds }: PipelineC
   }, [files, chatHistory.length, selectedFileIds.length]);
 
   return (
-    <div className="pipeline-chart-card js-reveal" style={{ padding: "32px", background: "#ffffff", borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0)", border: "1px solid #e1e4e8" }}>
+    <div className="pipeline-chart-card js-reveal" style={{ padding: "32px", borderRadius: "16px", boxShadow: "0 10px 40px var(--mission-shadow)", border: "1px solid var(--mission-panel-border)" }}>
       <div className="pipeline-chart-head" style={{ marginBottom: "32px" }}>
-        <p className="pipeline-chart-kicker" style={{ color: "#2091d0", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>Workspace Analytics</p>
-        <h3 style={{ fontSize: "20px", margin: "8px 0", color: "#1a1a1a", fontWeight: 600 }}>Source flow & media distribution</h3>
-        <p style={{ color: "#666", fontSize: "14px" }}>Live counts across ingest, indexing, scope selection, and answer activity.</p>
+        <p className="pipeline-chart-kicker" style={{ color: "var(--mission-accent)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>Workspace Analytics</p>
+        <h3 style={{ fontSize: "20px", margin: "8px 0", fontWeight: 600 }}>Source flow & media distribution</h3>
+        <p style={{ fontSize: "14px" }}>Live counts across ingest, indexing, scope selection, and answer activity.</p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
@@ -57,27 +57,27 @@ export function PipelineChart({ files, chatHistory, selectedFileIds }: PipelineC
                   <stop offset="95%" stopColor="#2091d0" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#8a95a1" }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#8a95a1" }} />
-              <Tooltip cursor={{ stroke: '#2091d0', strokeWidth: 1, strokeDasharray: '4 4' }} contentStyle={{ borderRadius: '8px', border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-              <Area type="monotone" dataKey="value" stroke="#2091d0" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" activeDot={{ r: 6, fill: '#2091d0', stroke: '#fff', strokeWidth: 2 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--mission-panel-border)" />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} />
+              <Tooltip cursor={{ stroke: 'var(--mission-accent)', strokeWidth: 1, strokeDasharray: '4 4' }} contentStyle={{ backgroundColor: 'var(--mission-panel-soft)', borderRadius: '8px', border: '1px solid var(--mission-panel-border)', boxShadow: '0 4px 12px var(--mission-shadow)' }} />
+              <Area type="monotone" dataKey="value" stroke="var(--mission-accent)" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" activeDot={{ r: 6, fill: 'var(--mission-accent)', stroke: '#fff', strokeWidth: 2 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        <div style={{ height: "200px", borderTop: "1px solid #f0f0f0", paddingTop: "32px" }}>
+        <div style={{ height: "200px", borderTop: "1px solid var(--mission-panel-border)", paddingTop: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-            <h4 style={{ fontSize: "14px", color: "#5f6872", fontWeight: 600, margin: 0 }}>Media Format Mix</h4>
-            <span style={{ fontSize: "12px", background: "#f1f5f9", padding: "4px 8px", borderRadius: "12px", color: "#64748b" }}>Live Dataset</span>
+            <h4 style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>Media Format Mix</h4>
+            <span style={{ fontSize: "12px", background: "var(--mission-panel-soft)", padding: "4px 8px", borderRadius: "12px" }}>Live Dataset</span>
           </div>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={summary.mediaMix} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#8a95a1" }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#8a95a1" }} />
-              <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-              <Bar dataKey="value" fill="#93c5fd" radius={[6, 6, 0, 0]} activeBar={{ fill: '#3b82f6' }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--mission-panel-border)" />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} />
+              <Tooltip cursor={{ fill: 'var(--mission-panel-soft)' }} contentStyle={{ backgroundColor: 'var(--mission-panel-soft)', borderRadius: '8px', border: '1px solid var(--mission-panel-border)', boxShadow: '0 4px 12px var(--mission-shadow)' }} />
+              <Bar dataKey="value" fill="var(--mission-accent)" radius={[6, 6, 0, 0]} activeBar={{ fill: 'var(--mission-accent)' }} />
             </BarChart>
           </ResponsiveContainer>
         </div>

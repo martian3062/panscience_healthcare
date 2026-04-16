@@ -205,7 +205,7 @@ export function Dashboard() {
 
     const tick = (now: number) => {
       if (now - lastPaint >= 33) {
-        const grade = sampleMissionGrade((now - startedAt) / 1000, pointerRef.current);
+        const grade = sampleMissionGrade((now - startedAt) / 1000, pointerRef.current, isDark);
         const nextVars = missionGradeVars(grade);
 
         for (const [name, value] of Object.entries(nextVars)) {
@@ -529,7 +529,7 @@ export function Dashboard() {
           100% { background-position: -200% center; }
         }
       `}</style>
-      <MissionBackground pointer={pointer} />
+      <MissionBackground pointer={pointer} isDark={isDark} />
 
       <header className="site-topbar">
         <div className="site-container">
@@ -1022,16 +1022,16 @@ export function Dashboard() {
                   <article 
                     key={card.id} 
                     className="solution-card js-stagger-item interactive-card" 
-                    style={{ background: "#fff", padding: "24px", borderRadius: "12px", border: "1px solid #eee", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "flex-start" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)"; }}
+                    style={{ padding: "24px", borderRadius: "12px", border: "1px solid var(--mission-panel-border)", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "flex-start" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 24px var(--mission-shadow)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
                   >
-                    <div className="solution-icon" style={{ background: "#f1f5f9", padding: "12px", borderRadius: "50%", marginBottom: "16px" }}>
-                      <Icon className="h-5 w-5" style={{ color: "#2091d0" }} />
+                    <div className="solution-icon" style={{ background: "var(--mission-badge)", padding: "12px", borderRadius: "50%", marginBottom: "16px" }}>
+                      <Icon className="h-5 w-5" style={{ color: "var(--mission-accent)" }} />
                     </div>
                     <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px" }}>{card.title}</h3>
-                    <p style={{ fontSize: "14px", color: "#666", marginBottom: "16px", flex: 1, minHeight: "80px" }}>{card.text}</p>
-                    <span className="solution-link" style={{ color: "#2091d0", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <p style={{ fontSize: "14px", marginBottom: "16px", flex: 1, minHeight: "80px" }}>{card.text}</p>
+                    <span className="solution-link" style={{ color: "var(--mission-accent)", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
                       Learn more
                       <ChevronRight className="h-3 w-3" />
                     </span>
@@ -1067,7 +1067,7 @@ export function Dashboard() {
       {error ? <div className="floating-error">{error}</div> : null}
 
       {ttsState !== "stopped" && (
-        <div className="fixed bottom-6 right-6 bg-white p-4 rounded-xl shadow-2xl border border-gray-100 flex flex-col gap-3 w-72 z-[100] animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-6 right-6 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col gap-3 w-72 z-[100] animate-in slide-in-from-bottom-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Now Reading</span>
             <button onClick={() => { window.speechSynthesis.cancel(); setTtsState("stopped"); setActiveChunkId(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
@@ -1086,7 +1086,7 @@ export function Dashboard() {
                   setTtsState("playing");
                 }
               }}
-              className="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-colors shrink-0"
+              className="w-10 h-10 flex items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full transition-colors shrink-0"
             >
               {ttsState === "playing" ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-1" />}
             </button>

@@ -7,12 +7,12 @@ import * as THREE from "three";
 import { HiveField } from "@/components/hive-field";
 import { sampleMissionGrade, type PointerState } from "@/lib/mission-grade";
 
-function AtmospherePlane({ pointer }: { pointer: PointerState }) {
+function AtmospherePlane({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const backPlaneRef = useRef<THREE.MeshBasicMaterial>(null);
   const sidePlaneRef = useRef<THREE.MeshBasicMaterial>(null);
 
   useFrame((state) => {
-    const grade = sampleMissionGrade(state.clock.getElapsedTime(), pointer);
+    const grade = sampleMissionGrade(state.clock.getElapsedTime(), pointer, isDark);
 
     if (backPlaneRef.current) {
       backPlaneRef.current.color.setStyle(grade.bodyMid);
@@ -27,7 +27,7 @@ function AtmospherePlane({ pointer }: { pointer: PointerState }) {
     <>
       <mesh position={[0, 0, -7.8]}>
         <planeGeometry args={[36, 22]} />
-        <meshBasicMaterial ref={backPlaneRef} color="#eef2f5" transparent opacity={0.88} />
+        <meshBasicMaterial ref={backPlaneRef} color="#eef2f5" transparent opacity={isDark ? 0.4 : 0.88} />
       </mesh>
       <mesh position={[6.4, -0.8, -6.8]} rotation={[0, 0, -0.12]}>
         <planeGeometry args={[16, 14]} />
@@ -37,7 +37,7 @@ function AtmospherePlane({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function StarField({ pointer }: { pointer: PointerState }) {
+function StarField({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.PointsMaterial>(null);
   const { positions, colors } = useMemo(() => {
@@ -65,7 +65,7 @@ function StarField({ pointer }: { pointer: PointerState }) {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
 
     if (pointsRef.current) {
       pointsRef.current.rotation.y = time * 0.014 + pointer.x * 0.08;
@@ -99,7 +99,7 @@ function StarField({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function SignalBands({ pointer }: { pointer: PointerState }) {
+function SignalBands({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const materialRefs = useRef<THREE.MeshBasicMaterial[]>([]);
   const rings = useMemo(
@@ -131,7 +131,7 @@ function SignalBands({ pointer }: { pointer: PointerState }) {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
     if (groupRef.current) {
       groupRef.current.rotation.y = time * 0.05 + pointer.x * 0.08;
       groupRef.current.rotation.x = pointer.y * 0.03;
@@ -164,7 +164,7 @@ function SignalBands({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function HiveCluster({ pointer }: { pointer: PointerState }) {
+function HiveCluster({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const tempObject = useRef(new THREE.Object3D());
@@ -194,7 +194,7 @@ function HiveCluster({ pointer }: { pointer: PointerState }) {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
     const mesh = meshRef.current;
     const material = materialRef.current;
     if (!mesh || !material) return;
@@ -230,14 +230,14 @@ function HiveCluster({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function DataSheet({ pointer }: { pointer: PointerState }) {
+function DataSheet({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const wireRef = useRef<THREE.MeshBasicMaterial>(null);
   const planeRef = useRef<THREE.MeshBasicMaterial>(null);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
     if (!groupRef.current) return;
 
     groupRef.current.rotation.z = -0.18 + Math.sin(time * 0.16) * 0.02;
@@ -270,14 +270,14 @@ function DataSheet({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function Probe({ pointer }: { pointer: PointerState }) {
+function Probe({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const coneRef = useRef<THREE.MeshStandardMaterial>(null);
   const trailRef = useRef<THREE.MeshBasicMaterial>(null);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
     if (!groupRef.current) return;
 
     const orbit = time * 0.34;
@@ -312,7 +312,7 @@ function Probe({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function DataBeams({ pointer }: { pointer: PointerState }) {
+function DataBeams({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const materialRefs = useRef<THREE.MeshBasicMaterial[]>([]);
   const beams = useMemo(
@@ -326,7 +326,7 @@ function DataBeams({ pointer }: { pointer: PointerState }) {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    const grade = sampleMissionGrade(time, pointer);
+    const grade = sampleMissionGrade(time, pointer, isDark);
     if (!groupRef.current) return;
 
     groupRef.current.rotation.z = Math.sin(time * 0.08) * 0.02;
@@ -363,13 +363,13 @@ function DataBeams({ pointer }: { pointer: PointerState }) {
   );
 }
 
-function MissionLightRig({ pointer }: { pointer: PointerState }) {
+function MissionLightRig({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   const ambientRef = useRef<THREE.AmbientLight>(null);
   const directionalRef = useRef<THREE.DirectionalLight>(null);
   const pointRef = useRef<THREE.PointLight>(null);
 
   useFrame((state) => {
-    const grade = sampleMissionGrade(state.clock.getElapsedTime(), pointer);
+    const grade = sampleMissionGrade(state.clock.getElapsedTime(), pointer, isDark);
 
     if (ambientRef.current) {
       ambientRef.current.color.setStyle(grade.star);
@@ -393,28 +393,28 @@ function MissionLightRig({ pointer }: { pointer: PointerState }) {
   );
 }
 
-export function MissionBackground({ pointer }: { pointer: PointerState }) {
+export function MissionBackground({ pointer, isDark }: { pointer: PointerState, isDark: boolean }) {
   return (
     <div className="mission-background" aria-hidden="true">
       <Canvas camera={{ position: [0, 0, 10], fov: 36 }} dpr={[1.2, 2]} gl={{ alpha: true, antialias: true }}>
-        <MissionLightRig pointer={pointer} />
+        <MissionLightRig pointer={pointer} isDark={isDark} />
         <HiveField
           pointer={pointer}
           planeSize={[28, 18]}
           position={[1.2, -0.1, -6.4]}
           scale={5.8}
-          opacity={0.92}
-          brightness={1.08}
+          opacity={isDark ? 0.45 : 0.92}
+          brightness={isDark ? 0.35 : 1.08}
           drift={[0.42, -0.2]}
           bias={[0.56, 0.04]}
         />
-        <AtmospherePlane pointer={pointer} />
-        <StarField pointer={pointer} />
-        <HiveCluster pointer={pointer} />
-        <DataBeams pointer={pointer} />
-        <SignalBands pointer={pointer} />
-        <DataSheet pointer={pointer} />
-        <Probe pointer={pointer} />
+        <AtmospherePlane pointer={pointer} isDark={isDark} />
+        <StarField pointer={pointer} isDark={isDark} />
+        <HiveCluster pointer={pointer} isDark={isDark} />
+        <DataBeams pointer={pointer} isDark={isDark} />
+        <SignalBands pointer={pointer} isDark={isDark} />
+        <DataSheet pointer={pointer} isDark={isDark} />
+        <Probe pointer={pointer} isDark={isDark} />
       </Canvas>
     </div>
   );
