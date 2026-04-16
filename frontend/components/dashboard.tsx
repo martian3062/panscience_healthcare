@@ -1004,7 +1004,7 @@ export function Dashboard() {
           </div>
         </section>
 
-        <section className="section-block js-reveal" id="solutions" style={{ borderTop: "1px solid #eaeaea", backgroundColor: "#fafbfc" }}>
+        <section className="section-block js-reveal" id="solutions" style={{ borderTop: "1px solid var(--mission-panel-border)", backgroundColor: "var(--mission-panel-soft)" }}>
           <div className="site-container">
             <div className="section-heading" style={{ maxWidth: "600px", margin: "0 auto 40px", textAlign: "center" }}>
               <span className="section-kicker">Core capabilities</span>
@@ -1029,8 +1029,8 @@ export function Dashboard() {
                     <div className="solution-icon" style={{ background: "var(--mission-badge)", padding: "12px", borderRadius: "50%", marginBottom: "16px" }}>
                       <Icon className="h-5 w-5" style={{ color: "var(--mission-accent)" }} />
                     </div>
-                    <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px" }}>{card.title}</h3>
-                    <p style={{ fontSize: "14px", marginBottom: "16px", flex: 1, minHeight: "80px" }}>{card.text}</p>
+                    <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px", color: "var(--mission-text-primary)" }}>{card.title}</h3>
+                    <p style={{ fontSize: "14px", marginBottom: "16px", flex: 1, minHeight: "80px", color: "var(--mission-text-secondary)" }}>{card.text}</p>
                     <span className="solution-link" style={{ color: "var(--mission-accent)", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
                       Learn more
                       <ChevronRight className="h-3 w-3" />

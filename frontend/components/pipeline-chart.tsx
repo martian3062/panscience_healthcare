@@ -58,8 +58,8 @@ export function PipelineChart({ files, chatHistory, selectedFileIds }: PipelineC
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--mission-panel-border)" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--mission-text-secondary)" }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--mission-text-secondary)" }} />
               <Tooltip cursor={{ stroke: 'var(--mission-accent)', strokeWidth: 1, strokeDasharray: '4 4' }} contentStyle={{ backgroundColor: 'var(--mission-panel-soft)', borderRadius: '8px', border: '1px solid var(--mission-panel-border)', boxShadow: '0 4px 12px var(--mission-shadow)' }} />
               <Area type="monotone" dataKey="value" stroke="var(--mission-accent)" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" activeDot={{ r: 6, fill: 'var(--mission-accent)', stroke: '#fff', strokeWidth: 2 }} />
             </AreaChart>
@@ -74,8 +74,8 @@ export function PipelineChart({ files, chatHistory, selectedFileIds }: PipelineC
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={summary.mediaMix} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--mission-panel-border)" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--warm)" }} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--mission-text-secondary)" }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--mission-text-secondary)" }} />
               <Tooltip cursor={{ fill: 'var(--mission-panel-soft)' }} contentStyle={{ backgroundColor: 'var(--mission-panel-soft)', borderRadius: '8px', border: '1px solid var(--mission-panel-border)', boxShadow: '0 4px 12px var(--mission-shadow)' }} />
               <Bar dataKey="value" fill="var(--mission-accent)" radius={[6, 6, 0, 0]} activeBar={{ fill: 'var(--mission-accent)' }} />
             </BarChart>

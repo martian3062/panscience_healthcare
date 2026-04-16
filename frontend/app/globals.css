@@ -22,6 +22,15 @@
   --mission-accent: hsla(190, 78%, 44%, 1);
   --mission-button-shadow: hsla(192, 64%, 46%, 0.24);
   --mission-shadow: hsla(192, 24%, 18%, 0.12);
+  --mission-text-primary: #1a1a1a;
+  --mission-text-secondary: #5e6670;
+  --mission-text-muted: #8c949d;
+}
+
+.dark {
+  --mission-text-primary: #f8fafc;
+  --mission-text-secondary: #cbd5e1;
+  --mission-text-muted: #94a3b8;
 }
 
 .dark {
@@ -49,12 +58,66 @@
   color: #d1d5db;
 }
 
-.dark .brand-mark, .dark .hero-copy h1, .dark .section-heading h2, .dark .surface-head h3, .dark .solution-body h3, .dark .stat-card strong, .dark .surface-empty-title, .dark .file-name {
-  color: #f9fafb;
+.dark body {
+  color: var(--mission-text-primary);
 }
 
-.dark .hero-text, .dark .section-heading p, .dark .solution-body p, .dark .stat-card span, .dark .file-meta, .dark .file-summary, .dark .empty-copy, .dark .top-links, .dark .pipeline-chart-head p {
-  color: #9ca3af;
+.dark .brand-mark,
+.dark .hero-copy h1,
+.dark .section-heading h2,
+.dark .surface-head h3,
+.dark .solution-body h3,
+.dark .stat-card strong,
+.dark .surface-empty-title,
+.dark .file-name,
+.dark .process-step h3,
+.dark .footer-title,
+.dark .hero-floating-title {
+  color: var(--mission-text-primary) !important;
+}
+
+.dark .hero-text,
+.dark .section-heading p,
+.dark .solution-body p,
+.dark .stat-card span,
+.dark .file-meta,
+.dark .file-summary,
+.dark .empty-copy,
+.dark .top-links,
+.dark .pipeline-chart-head p,
+.dark .process-step p,
+.dark .footer-copy,
+.dark .hero-floating-label,
+.dark .hero-floating-meta,
+.dark .hero-rail,
+.dark .hero-subline {
+  color: var(--mission-text-secondary) !important;
+}
+
+.dark .eyebrow,
+.dark .section-kicker {
+  color: var(--mission-text-muted) !important;
+}
+
+.dark .hero-rail a::before {
+  background: var(--mission-panel-border) !important;
+}
+
+.dark .hero-section::before {
+  background:
+    radial-gradient(circle at 76% 34%, var(--mission-overlay-primary), transparent 17%),
+    radial-gradient(circle at 64% 44%, var(--mission-hero-glow-secondary), transparent 20%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0)) !important;
+}
+
+.dark .pipeline-chart-card,
+.dark .stat-card,
+.dark .solution-card,
+.dark .surface-panel,
+.dark .hero-visual-inner,
+.dark .hero-floating-card {
+  background-color: var(--mission-panel-glass) !important;
+  border-color: var(--mission-panel-border) !important;
 }
 
 .dark .chunk-panel, .dark .chunk-row, .dark .chunk-panel-head, .dark .file-row, .dark .surface-head, .dark .answer-panel, .dark .history-panel, .dark .pipeline-chart-card {
