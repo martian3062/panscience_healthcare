@@ -5,21 +5,44 @@ services:
     build:
       context: ./backend
       args:
-        INSTALL_AI_EXTRAS: "false"
+        INSTALL_AI_EXTRAS: "true"
+    restart: always
     env_file:
       - ./backend/.env
-    ports:
-      - "8000:8000"
     volumes:
-      - ./backend/data:/app/data
-      - ./backend/uploads:/app/uploads
+      - media-data:/app/data
+      - media-uploads:/app/uploads
+    networks:
+      - mission-net
 
   frontend:
     build:
       context: ./frontend
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
-    ports:
-      - "3000:3000"
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    restart: always
     depends_on:
       - backend
+    networks:
+      - mission-net
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - mission-net
+
+volumes:
+  media-data:
+  media-uploads:
+
+networks:
+  mission-net:
+    driver: bridge

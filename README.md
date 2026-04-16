@@ -11,7 +11,10 @@ This repository now covers the core assignment requirements:
 - Ask questions against uploaded files
 - Extract and display audio/video timestamps
 - Jump the native media player to the cited timestamp
-- Containerize with Docker and run both services with Docker Compose
+- **Word-by-Word TTS Sycn**: Interactive "Karaoke" style audio playback for documents.
+- **True Black Theme**: High-contrast OLED-grade dark mode for professional use.
+- **Interactive Analytics**: Real-time media mix and processing pipeline charts via Recharts.
+- Containerize with Docker and run both services within an Nginx-proxied stack.
 - Run automated backend tests with a 95%+ enforced coverage gate
 - Build and validate in GitHub Actions
 
@@ -212,6 +215,16 @@ This starts:
 
 - backend on `8000`
 - frontend on `3000`
+- nginx on `80` (production proxy)
+
+## Deployment (AWS Low-Tier)
+
+For intern assignments or low-budget prototypes, we recommend deploying to a single **AWS EC2** instance.
+
+- **Recommended Instance**: `t3.small` (2GB RAM) — ~$15/mo.
+- **Instruction Manual**: [AWS_SETUP_GUIDE.md](./AWS_SETUP_GUIDE.md)
+
+This setup includes a pre-configured Nginx reverse proxy and a deployment script to get you live in minutes.
 
 ## CI/CD
 
