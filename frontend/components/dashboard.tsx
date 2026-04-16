@@ -20,6 +20,8 @@ import {
   Play,
   Pause,
   Square,
+  Sun,
+  Moon,
   Sparkles,
   Trash2,
   UploadCloud,
@@ -133,9 +135,22 @@ export function Dashboard() {
   const pointerRef = useRef<PointerState>({ x: 0, y: 0 });
   const mediaRef = useRef<HTMLMediaElement | null>(null);
 
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, [isDark]);
+
   const [ttsState, setTtsState] = useState<"playing" | "paused" | "stopped">("stopped");
   const [ttsProgress, setTtsProgress] = useState(0);
   const [activeChunkId, setActiveChunkId] = useState<string | null>(null);
+  const [ttsActiveCharIndex, setTtsActiveCharIndex] = useState(-1);
   const ttsBoundariesRef = useRef<{ id: string; start: number; end: number }[]>([]);
   const ttsPayloadRef = useRef<{ text: string; type: "text" | "document" }>({ text: "", type: "text" });
   const ttsStartIndexRef = useRef<number>(0);
@@ -378,18 +393,22 @@ export function Dashboard() {
     utterance.onstart = () => {
       setTtsState("playing");
       setTtsProgress((offset / (totalLen || 1)) * 100);
+      setTtsActiveCharIndex(offset);
     };
     
     utterance.onboundary = (event) => {
       const absoluteCharIdx = ttsStartIndexRef.current + event.charIndex;
       setTtsProgress((absoluteCharIdx / (totalLen || 1)) * 100);
+      setTtsActiveCharIndex(absoluteCharIdx);
       
       if (ttsPayloadRef.current.type === "document") {
         const match = ttsBoundariesRef.current.find(b => absoluteCharIdx >= b.start && absoluteCharIdx <= b.end);
         if (match) {
-          setActiveChunkId(match.id);
-          const el = document.getElementById(`chunk-${match.id}`);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (activeChunkId !== match.id) {
+            setActiveChunkId(match.id);
+            const el = document.getElementById(`chunk-${match.id}`);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
         }
       }
     };
@@ -398,6 +417,7 @@ export function Dashboard() {
       setTtsState("stopped");
       setTtsProgress(0);
       setActiveChunkId(null);
+      setTtsActiveCharIndex(-1);
     };
     
     utterance.onend = handleStop;
@@ -479,6 +499,28 @@ export function Dashboard() {
     );
   }
 
+  function renderChunkText(chunk: { id: string, text: string }) {
+    if (activeChunkId === chunk.id && ttsActiveCharIndex !== -1) {
+      const match = ttsBoundariesRef.current.find(b => b.id === chunk.id);
+      if (match) {
+        const localIdx = ttsActiveCharIndex - match.start;
+        if (localIdx >= 0 && localIdx < chunk.text.length) {
+          const nextSpace = chunk.text.indexOf(" ", localIdx);
+          const endIdx = nextSpace === -1 ? chunk.text.length : nextSpace;
+          const before = chunk.text.substring(0, localIdx);
+          const activeWord = chunk.text.substring(localIdx, endIdx);
+          const after = chunk.text.substring(endIdx);
+          return (
+            <p className="whitespace-pre-wrap">
+              {before}<mark className="bg-amber-300 text-amber-900 rounded-sm px-0.5">{activeWord}</mark>{after}
+            </p>
+          );
+        }
+      }
+    }
+    return <p className="whitespace-pre-wrap">{chunk.text}</p>;
+  }
+
   return (
     <div ref={rootRef} className="site-shell" onMouseMove={handlePointerMove}>
       <style>{`
@@ -504,16 +546,25 @@ export function Dashboard() {
               <a href="#conversation">Conversation</a>
             </nav>
 
-            <label className="site-cta">
-              <span>{uploading ? "Uploading..." : "Upload Source"}</span>
-              <input
-                className="hidden"
-                type="file"
-                accept=".pdf,.mp3,.wav,.m4a,.mp4,.mov,.mkv,.webm,.txt,.md,.doc,.docx"
-                onChange={handleUpload}
-                disabled={uploading}
-              />
-            </label>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsDark(!isDark)} 
+                className="p-2 text-gray-500 hover:text-accent outline-none transition-colors" 
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+              <label className="site-cta">
+                <span>{uploading ? "Uploading..." : "Upload Source"}</span>
+                <input
+                  className="hidden"
+                  type="file"
+                  accept=".pdf,.mp3,.wav,.m4a,.mp4,.mov,.mkv,.webm,.txt,.md,.doc,.docx"
+                  onChange={handleUpload}
+                  disabled={uploading}
+                />
+              </label>
+            </div>
           </div>
         </div>
       </header>
@@ -788,7 +839,7 @@ export function Dashboard() {
                             <div 
                               id={`chunk-${chunk.id}`}
                               key={chunk.id} 
-                              className={`chunk-row transition-all duration-300 ${activeChunkId === chunk.id ? "bg-amber-50 border-l-4 border-l-amber-400 shadow-sm transform scale-[1.02]" : ""}`}
+                              className={`chunk-row transition-all duration-300 ${activeChunkId === chunk.id ? "bg-amber-50 dark:bg-amber-900/20 border-l-4 border-l-amber-400 shadow-sm transform scale-[1.02]" : ""}`}
                             >
                               <div className="chunk-meta">
                                 <span>#{chunk.order_index + 1}</span>
@@ -799,7 +850,7 @@ export function Dashboard() {
                                   </span>
                                 ) : null}
                               </div>
-                              <p>{chunk.text}</p>
+                              {renderChunkText(chunk)}
                             </div>
                           ))
                         )}
