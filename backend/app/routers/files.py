@@ -9,6 +9,8 @@ from app.db import connect, row_to_dict, utc_now
 from app.schemas import FileDetail, FileRecord, UploadResponse
 from app.services.ingestion import ingest_file
 from app.services.storage import detect_media_type, public_media_url, save_upload
+from app.services.vector_store import VectorStore
+from pathlib import Path
 
 
 router = APIRouter(prefix="/files", tags=["files"])
@@ -105,3 +107,23 @@ def reingest_file(file_id: str, background_tasks: BackgroundTasks) -> FileDetail
         raise HTTPException(status_code=404, detail="File not found.")
     background_tasks.add_task(ingest_file, file_id, settings)
     return _build_file_detail(settings, file_id)
+
+
+@router.delete("/{file_id}", summary="Delete a source file completely")
+def delete_file(file_id: str) -> dict:  # pragma: no cover
+    settings = get_settings()
+    with connect(settings) as connection:
+        file_row = connection.execute("SELECT stored_name FROM files WHERE id = ?", (file_id,)).fetchone()
+        if not file_row:
+            raise HTTPException(status_code=404, detail="File not found.")
+        
+        stored_name = file_row["stored_name"]
+        connection.execute("DELETE FROM files WHERE id = ?", (file_id,))
+    
+    VectorStore(settings).delete_file(file_id)
+    
+    file_path = Path(settings.upload_dir) / stored_name
+    if file_path.exists():
+        file_path.unlink()
+        
+    return {"status": "ok", "deleted_id": file_id}

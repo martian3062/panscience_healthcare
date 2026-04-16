@@ -100,6 +100,10 @@ export async function uploadFile(file: File): Promise<FileRecord> {
   return result.file;
 }
 
+export async function deleteFile(fileId: string): Promise<void> {
+  await apiFetch(`/api/files/${fileId}`, { method: "DELETE" });
+}
+
 export async function queryChat(payload: {
   question: string;
   file_ids: string[];

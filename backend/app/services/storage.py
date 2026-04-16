@@ -21,6 +21,8 @@ ALLOWED_EXTENSIONS = {
     ".webm": "video",
     ".txt": "text",
     ".md": "text",
+    ".docx": "docx",
+    ".doc": "docx",
 }
 
 

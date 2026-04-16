@@ -51,6 +51,16 @@ class VectorStore:
         )
         return True
 
+    def delete_file(self, file_id: str) -> bool:
+        collection = self._collection()
+        if collection is None:
+            return False
+        try:
+            collection.delete(where={"file_id": file_id})
+        except Exception:
+            pass
+        return True
+
     def query(self, query_embedding: list[float], limit: int, file_ids: list[str]) -> list[dict[str, Any]]:
         collection = self._collection()
         if collection is None:

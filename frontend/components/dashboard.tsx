@@ -17,8 +17,13 @@ import {
   Mic2,
   RefreshCw,
   Search,
+  Play,
+  Pause,
+  Square,
   Sparkles,
+  Trash2,
   UploadCloud,
+  Volume2,
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -45,6 +50,7 @@ import {
   listFiles,
   streamChatQuery,
   uploadFile,
+  deleteFile
 } from "@/lib/api";
 
 const solutionCards = [
@@ -52,24 +58,18 @@ const solutionCards = [
     id: "pdf-insights",
     title: "Document intelligence",
     text: "Anchor every answer to the exact page, extracted passage, and source file.",
-    image:
-      "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=900&q=80",
     icon: FileText,
   },
   {
     id: "audio-moments",
     title: "Audio moments",
     text: "Transcribe long recordings and jump to the exact second where a topic appears.",
-    image:
-      "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&w=900&q=80",
     icon: Mic2,
   },
   {
     id: "video-evidence",
     title: "Video evidence",
     text: "Surface answer-backed timestamps so teams can verify context without scrubbing.",
-    image:
-      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80",
     icon: Clapperboard,
   },
 ] as const;
@@ -132,6 +132,13 @@ export function Dashboard() {
   const [pointer, setPointer] = useState<PointerState>({ x: 0, y: 0 });
   const pointerRef = useRef<PointerState>({ x: 0, y: 0 });
   const mediaRef = useRef<HTMLMediaElement | null>(null);
+
+  const [ttsState, setTtsState] = useState<"playing" | "paused" | "stopped">("stopped");
+  const [ttsProgress, setTtsProgress] = useState(0);
+  const [activeChunkId, setActiveChunkId] = useState<string | null>(null);
+  const ttsBoundariesRef = useRef<{ id: string; start: number; end: number }[]>([]);
+  const ttsPayloadRef = useRef<{ text: string; type: "text" | "document" }>({ text: "", type: "text" });
+  const ttsStartIndexRef = useRef<number>(0);
 
   const selectedFile = useMemo(
     () => files.find((item) => item.id === selectedFileId) ?? null,
@@ -355,6 +362,102 @@ export function Dashboard() {
     }
   }
 
+  function playFromOffset(offset: number) {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    
+    window.speechSynthesis.cancel();
+    
+    const fullText = ttsPayloadRef.current.text;
+    const remainingText = fullText.substring(offset);
+    
+    ttsStartIndexRef.current = offset;
+    
+    const utterance = new SpeechSynthesisUtterance(remainingText);
+    const totalLen = fullText.length;
+    
+    utterance.onstart = () => {
+      setTtsState("playing");
+      setTtsProgress((offset / (totalLen || 1)) * 100);
+    };
+    
+    utterance.onboundary = (event) => {
+      const absoluteCharIdx = ttsStartIndexRef.current + event.charIndex;
+      setTtsProgress((absoluteCharIdx / (totalLen || 1)) * 100);
+      
+      if (ttsPayloadRef.current.type === "document") {
+        const match = ttsBoundariesRef.current.find(b => absoluteCharIdx >= b.start && absoluteCharIdx <= b.end);
+        if (match) {
+          setActiveChunkId(match.id);
+          const el = document.getElementById(`chunk-${match.id}`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    };
+    
+    const handleStop = () => {
+      setTtsState("stopped");
+      setTtsProgress(0);
+      setActiveChunkId(null);
+    };
+    
+    utterance.onend = handleStop;
+    utterance.onerror = handleStop;
+    
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function speakText(e: MouseEvent, text: string) {
+    e.stopPropagation();
+    ttsBoundariesRef.current = [];
+    setActiveChunkId(null);
+    ttsPayloadRef.current = { text, type: "text" };
+    playFromOffset(0);
+  }
+
+  function speakDocument(e: MouseEvent) {
+    e.preventDefault();
+    if (!activeFile || activeFile.chunks.length === 0) return;
+    
+    let fullText = "";
+    const boundaries: { id: string; start: number; end: number }[] = [];
+    
+    activeFile.chunks.forEach((chunk) => {
+      const start = fullText.length;
+      fullText += chunk.text + ". ";
+      const end = fullText.length;
+      boundaries.push({ id: chunk.id, start, end });
+    });
+    
+    ttsBoundariesRef.current = boundaries;
+    ttsPayloadRef.current = { text: fullText, type: "document" };
+    playFromOffset(0);
+  }
+
+  function handleSliderSeek(e: ChangeEvent<HTMLInputElement>) {
+    const val = parseFloat(e.target.value);
+    const totalLen = ttsPayloadRef.current.text.length;
+    if (totalLen > 0) {
+      const targetOffset = Math.floor((val / 100) * totalLen);
+      playFromOffset(targetOffset);
+    }
+  }
+
+  async function handleDeleteFile() {
+    if (!activeFile) return;
+    if (!confirm("Are you sure you want to completely delete this file? This cannot be undone.")) return;
+    setBusy(true);
+    try {
+      await deleteFile(activeFile.id);
+      setActiveFile(null);
+      setSelectedFileId("");
+      await loadFiles();
+    } catch (err) {
+      if (err instanceof Error) setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function handleCitationClick(citation: Citation) {
     setSelectedFileId(citation.file_id);
     if (citation.timestamp_start != null) {
@@ -378,6 +481,12 @@ export function Dashboard() {
 
   return (
     <div ref={rootRef} className="site-shell" onMouseMove={handlePointerMove}>
+      <style>{`
+        @keyframes glimmer {
+          0% { background-position: 200% center; }
+          100% { background-position: -200% center; }
+        }
+      `}</style>
       <MissionBackground pointer={pointer} />
 
       <header className="site-topbar">
@@ -400,7 +509,7 @@ export function Dashboard() {
               <input
                 className="hidden"
                 type="file"
-                accept=".pdf,.mp3,.wav,.m4a,.mp4,.mov,.mkv,.webm,.txt,.md"
+                accept=".pdf,.mp3,.wav,.m4a,.mp4,.mov,.mkv,.webm,.txt,.md,.doc,.docx"
                 onChange={handleUpload}
                 disabled={uploading}
               />
@@ -428,7 +537,7 @@ export function Dashboard() {
                 verified source context with confidence.
               </p>
 
-              <div className="hero-actions">
+              <div className="hero-actions flex flex-wrap items-center gap-4">
                 <Button onClick={() => document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth" })}>
                   Open Workspace
                 </Button>
@@ -438,6 +547,27 @@ export function Dashboard() {
                 >
                   Explore Capabilities
                 </Button>
+
+                <label 
+                  className="cursor-pointer inline-flex items-center justify-center px-6 py-2.5 font-semibold text-white rounded-md transition-all shadow-[0_0_20px_rgba(32,145,208,0.4)] hover:shadow-[0_0_30px_rgba(32,145,208,0.6)] hover:-translate-y-0.5"
+                  style={{
+                    background: "linear-gradient(90deg, #1e3a8a, #3b82f6, #1e3a8a, #3b82f6)",
+                    backgroundSize: "300% 100%",
+                    animation: "glimmer 3s infinite linear",
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <UploadCloud className="h-5 w-5" />
+                    <span>{uploading ? "Uploading..." : "Upload New Source"}</span>
+                  </div>
+                  <input
+                    className="hidden"
+                    type="file"
+                    accept=".pdf,.mp3,.wav,.m4a,.mp4,.mov,.mkv,.webm,.txt,.md,.doc,.docx"
+                    onChange={handleUpload}
+                    disabled={uploading}
+                  />
+                </label>
               </div>
 
               <p className="hero-subline">
@@ -499,42 +629,6 @@ export function Dashboard() {
           </div>
         </section>
 
-        <section className="section-block js-reveal" id="solutions">
-          <div className="site-container">
-            <div className="section-heading">
-              <span className="section-kicker">Core capabilities</span>
-              <h2>Built for mixed media retrieval, not just keyword search.</h2>
-              <p>
-                Search across long reports, calls, and lectures with page citations, transcript evidence, and
-                timestamp navigation baked into the product surface.
-              </p>
-            </div>
-
-            <div className="solution-grid js-stagger-group">
-              {solutionCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <article key={card.id} className="solution-card js-stagger-item">
-                    <div className="solution-image-wrap">
-                      <img src={card.image} alt={card.title} className="solution-image" />
-                    </div>
-                    <div className="solution-body">
-                      <div className="solution-icon">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <h3>{card.title}</h3>
-                      <p>{card.text}</p>
-                      <span className="solution-link">
-                        Learn more
-                        <ChevronRight className="h-4 w-4" />
-                      </span>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
 
         <section className="section-block workspace-shell js-reveal" id="workspace">
           <div className="site-container">
@@ -620,11 +714,17 @@ export function Dashboard() {
                   </div>
                 ) : (
                   <div className="surface-body">
-                    <div className="source-badges">
+                    <div className="source-badges flex-wrap flex gap-2">
                       <Badge>{mediaLabel(selectedFile.media_type)}</Badge>
                       <Badge tone={statusTone(selectedFile.status)}>{selectedFile.status}</Badge>
                       {selectedFile.page_count ? <Badge>{selectedFile.page_count} pages</Badge> : null}
                       {selectedFile.duration_seconds ? <Badge>{formatTime(selectedFile.duration_seconds)}</Badge> : null}
+                      
+                      <div className="flex-1" />
+                      <button onClick={handleDeleteFile} className="text-sm font-medium text-red-500 hover:text-red-400 flex items-center gap-1 transition-colors">
+                        <Trash2 className="h-4 w-4" />
+                        Delete File
+                      </button>
                     </div>
 
                     <div className="summary-panel">
@@ -657,16 +757,22 @@ export function Dashboard() {
                       />
                     ) : null}
 
-                    {selectedFile.media_type === "pdf" || selectedFile.media_type === "text" ? (
-                      <a
-                        className="inline-link"
-                        href={assetUrl(activeFile.media_url)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open original file
-                        <ArrowUpRight className="h-4 w-4" />
-                      </a>
+                    {selectedFile.media_type === "pdf" || selectedFile.media_type === "text" || selectedFile.media_type === "docx" ? (
+                      <div className="flex items-center gap-4 py-4">
+                        <a
+                          className="inline-link m-0"
+                          href={assetUrl(activeFile.media_url)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open original file
+                          <ArrowUpRight className="h-4 w-4" />
+                        </a>
+                        <button onClick={speakDocument} className="text-sm font-medium text-blue-500 hover:text-blue-400 flex items-center gap-1 transition-colors">
+                          <Volume2 className="h-4 w-4" />
+                          Read Document Aloud
+                        </button>
+                      </div>
                     ) : null}
 
                     <div className="chunk-panel">
@@ -679,7 +785,11 @@ export function Dashboard() {
                           <p className="chunk-empty">No chunks are available yet.</p>
                         ) : (
                           activeFile.chunks.map((chunk) => (
-                            <div key={chunk.id} className="chunk-row">
+                            <div 
+                              id={`chunk-${chunk.id}`}
+                              key={chunk.id} 
+                              className={`chunk-row transition-all duration-300 ${activeChunkId === chunk.id ? "bg-amber-50 border-l-4 border-l-amber-400 shadow-sm transform scale-[1.02]" : ""}`}
+                            >
                               <div className="chunk-meta">
                                 <span>#{chunk.order_index + 1}</span>
                                 {chunk.page_number != null ? <span>Page {chunk.page_number}</span> : null}
@@ -741,6 +851,10 @@ export function Dashboard() {
                         <div className="answer-meta">
                           <Badge tone="success">{chatResult.provider}</Badge>
                           <Badge>{new Date(chatResult.created_at).toLocaleTimeString()}</Badge>
+                          <button onClick={(e) => speakText(e, chatResult.answer)} className="text-sm font-medium text-blue-500 hover:text-blue-400 flex items-center gap-1 transition-colors">
+                            <Volume2 className="h-4 w-4" />
+                            Read Aloud
+                          </button>
                         </div>
                         <p className="answer-copy">{chatResult.answer}</p>
 
@@ -838,6 +952,44 @@ export function Dashboard() {
             <PipelineChart files={files} chatHistory={chatHistory} selectedFileIds={selectedFileIds} />
           </div>
         </section>
+
+        <section className="section-block js-reveal" id="solutions" style={{ borderTop: "1px solid #eaeaea", backgroundColor: "#fafbfc" }}>
+          <div className="site-container">
+            <div className="section-heading" style={{ maxWidth: "600px", margin: "0 auto 40px", textAlign: "center" }}>
+              <span className="section-kicker">Core capabilities</span>
+              <h2 style={{ fontSize: "24px" }}>Built for mixed media retrieval, not just keyword search.</h2>
+              <p>
+                Search across long reports, calls, and lectures with page citations, transcript evidence, and
+                timestamp navigation baked into the product surface.
+              </p>
+            </div>
+
+            <div className="solution-grid js-stagger-group" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px" }}>
+              {solutionCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <article 
+                    key={card.id} 
+                    className="solution-card js-stagger-item interactive-card" 
+                    style={{ background: "#fff", padding: "24px", borderRadius: "12px", border: "1px solid #eee", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "flex-start" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
+                  >
+                    <div className="solution-icon" style={{ background: "#f1f5f9", padding: "12px", borderRadius: "50%", marginBottom: "16px" }}>
+                      <Icon className="h-5 w-5" style={{ color: "#2091d0" }} />
+                    </div>
+                    <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px" }}>{card.title}</h3>
+                    <p style={{ fontSize: "14px", color: "#666", marginBottom: "16px", flex: 1, minHeight: "80px" }}>{card.text}</p>
+                    <span className="solution-link" style={{ color: "#2091d0", fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                      Learn more
+                      <ChevronRight className="h-3 w-3" />
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="site-footer">
@@ -862,6 +1014,45 @@ export function Dashboard() {
       </footer>
 
       {error ? <div className="floating-error">{error}</div> : null}
+
+      {ttsState !== "stopped" && (
+        <div className="fixed bottom-6 right-6 bg-white p-4 rounded-xl shadow-2xl border border-gray-100 flex flex-col gap-3 w-72 z-[100] animate-in slide-in-from-bottom-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Now Reading</span>
+            <button onClick={() => { window.speechSynthesis.cancel(); setTtsState("stopped"); setActiveChunkId(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
+              <Square className="h-4 w-4" />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => {
+                if (ttsState === "playing") {
+                  window.speechSynthesis.pause();
+                  setTtsState("paused");
+                } else {
+                  window.speechSynthesis.resume();
+                  setTtsState("playing");
+                }
+              }}
+              className="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-colors shrink-0"
+            >
+              {ttsState === "playing" ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-1" />}
+            </button>
+            
+            <div className="flex-1 w-full">
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={ttsProgress} 
+                onChange={handleSliderSeek}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

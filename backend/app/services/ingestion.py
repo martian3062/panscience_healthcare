@@ -52,6 +52,11 @@ def ingest_file(file_id: str, settings: Settings) -> None:
             units, page_count = extract_pdf_units(file_path)
             duration_seconds = None
             transcript_available = False
+        elif media_type == "docx":
+            from app.services.docx import extract_docx_units
+            units, page_count = extract_docx_units(file_path)
+            duration_seconds = None
+            transcript_available = False
         elif media_type in {"audio", "video"}:
             units, duration_seconds = transcribe_media_units(file_path, settings)
             page_count = None
