@@ -19,7 +19,7 @@ export function PipelineChart({ files, chatHistory, selectedFileIds }: PipelineC
     const pdfCount = files.filter((file) => file.media_type === "pdf").length;
     const audioCount = files.filter((file) => file.media_type === "audio").length;
     const videoCount = files.filter((file) => file.media_type === "video").length;
-    const textCount = files.filter((file) => file.media_type === "text" || file.media_type === "docx").length;
+    const textCount = files.filter((file) => file.media_type === "text").length;
 
     const steps = [
       { label: "Captured", value: Math.max(files.length, 1) },

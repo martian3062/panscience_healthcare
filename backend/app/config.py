@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_chat_model: str = "llama-3.3-70b-versatile"
     groq_transcription_model: str = "whisper-large-v3-turbo"
+    hf_token: str | None = None
 
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_chat_model: str = "llama3.2"
@@ -39,7 +40,7 @@ class Settings(BaseSettings):
     allow_dev_text_uploads: bool = True
 
     valid_api_keys: str = ""
-    rate_limit_per_minute: int = 30
+    rate_limit_per_minute: int = 150
 
     @field_validator("cors_origins", mode="before")
     @classmethod

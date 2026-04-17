@@ -1,4 +1,4 @@
-PyMuPDF
-chromadb
-sentence-transformers
-faster-whisper
+# Lightweight remote AI - No heavy local libraries needed
+# torch, transformers, and faster-whisper removed
+python-docx>=1.1.0
+PyMuPDF>=1.24.0

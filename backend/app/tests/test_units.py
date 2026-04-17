@@ -18,7 +18,7 @@ from app.config import Settings, get_settings
 from app.db import connect, init_db, row_to_dict, utc_now
 from app.routers import chat, files as files_router
 from app.schemas import ChatRequest
-from app.services import chunker, embeddings, ingestion, llm, media, pdf, storage, transcription, vector_store
+from app.services import chunker, embeddings, ingestion, llm, media, pdf, docx, storage, transcription, vector_store
 
 
 def make_settings(tmp_path: Path, **overrides: object) -> Settings:
@@ -346,6 +346,52 @@ def test_pdf_and_transcription_helpers(monkeypatch: pytest.MonkeyPatch, tmp_path
     assert units[0]["text"] == "First block"
     assert units[1]["text"] == "Fallback page text"
     assert fake_document.closed is True
+
+    # DOCX tests
+    docx_path = tmp_path / "valid.docx"
+    docx_path.write_bytes(b"PK\x03\x04")
+    
+    class FakeDocxPara:
+        def __init__(self, text):
+            self.text = text
+            
+    class FakeDocxDoc:
+        def __init__(self, filepath):
+            self.paragraphs = [FakeDocxPara("Hello world"), FakeDocxPara(" ")]
+            
+    fake_docx_mod = ModuleType("docx")
+    fake_docx_mod.Document = FakeDocxDoc
+    monkeypatch.setitem(sys.modules, "docx", fake_docx_mod)
+    
+    units, count = docx.extract_docx_units(str(docx_path))
+    assert count == 1
+    assert units[0]["text"] == "Hello world"
+    
+    class FakeEmptyDocxDoc:
+        def __init__(self, filepath):
+            self.paragraphs = []
+    
+    fake_docx_mod.Document = FakeEmptyDocxDoc
+    doc_path = tmp_path / "old.doc"
+    doc_path.write_bytes(b"\x00\x00Hello doc\x00\x00")
+    units, count = docx.extract_docx_units(str(doc_path))
+    assert count == 1
+    assert units[0]["text"] == "Hello doc"
+    
+    fake_docx_mod.Document = lambda fp: (_ for _ in ()).throw(RuntimeError("corrupted"))
+    units, count = docx.extract_docx_units(str(doc_path))
+    assert count == 1
+    assert units[0]["text"] == "Hello doc"
+
+    monkeypatch.delitem(sys.modules, "docx", raising=False)
+    def import_without_docx(name: str, *args: object, **kwargs: object):
+        if name == "docx":
+            raise ImportError("no docx")
+        return real_import(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", import_without_docx)
+    with pytest.raises(RuntimeError):
+        docx.extract_docx_units(str(docx_path))
+    monkeypatch.setattr(builtins, "__import__", real_import)
 
     segments = transcription._format_transcript_units(
         [

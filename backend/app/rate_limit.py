@@ -16,7 +16,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if limit <= 0:
             return await call_next(request)
 
-        identifier = request.headers.get("X-API-Key") or (request.client.host if request.client else "unknown")
+        forwarded = request.headers.get("X-Forwarded-For")
+        identifier = request.headers.get("X-API-Key") or (forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown"))
         
         now = time.time()
         window_start = now - 60.0

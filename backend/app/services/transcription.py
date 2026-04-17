@@ -8,6 +8,18 @@ import httpx
 from app.config import Settings
 from app.services.media import get_duration_seconds, normalize_media
 
+def _transcribe_with_faster_whisper(path: str) -> list[dict[str, Any]] | None:
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError:
+        return None
+    model = WhisperModel("base", device="cpu", compute_type="int8")
+    segments_gen, _ = model.transcribe(path, beam_size=3)
+    segments = []
+    for s in segments_gen:
+        segments.append({"start": float(s.start), "end": float(s.end), "text": str(s.text)})
+    return segments
+
 
 def _format_transcript_units(segments: list[dict[str, Any]]) -> list[dict[str, Any]]:
     units: list[dict[str, Any]] = []
@@ -45,20 +57,6 @@ def _transcribe_with_groq(path: str, settings: Settings) -> list[dict[str, Any]]
     return payload.get("segments") or []
 
 
-def _transcribe_with_faster_whisper(path: str) -> list[dict[str, Any]] | None:
-    try:
-        from faster_whisper import WhisperModel
-    except ImportError:
-        return None
-
-    model = WhisperModel("base", device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(path, beam_size=3)
-    return [
-        {"start": segment.start, "end": segment.end, "text": segment.text}
-        for segment in segments
-    ]
-
-
 def transcribe_media_units(path: str, settings: Settings) -> tuple[list[dict[str, Any]], float | None]:
     normalized_path = normalize_media(path)
     segments: list[dict[str, Any]] | None = None
@@ -76,7 +74,7 @@ def transcribe_media_units(path: str, settings: Settings) -> tuple[list[dict[str
             last_error = exc
 
     if not segments:
-        error_message = "Media transcription requires Groq credentials or faster-whisper installed."
+        error_message = "Transcription failed. Please check your Groq API key."
         if last_error:
             error_message = f"{error_message} Last error: {last_error}"
         raise RuntimeError(error_message)

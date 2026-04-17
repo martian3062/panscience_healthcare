@@ -41,10 +41,13 @@ class VectorStore:
             documents=[chunk["text"] for chunk in chunks],
             metadatas=[
                 {
-                    "file_id": file_id,
-                    "page_number": chunk.get("page_number"),
-                    "timestamp_start": chunk.get("timestamp_start"),
-                    "timestamp_end": chunk.get("timestamp_end"),
+                    str(k): (v if isinstance(v, (str, int, float, bool)) else str(v))
+                    for k, v in {
+                        "file_id": file_id,
+                        "page_number": chunk.get("page_number"),
+                        "timestamp_start": chunk.get("timestamp_start"),
+                        "timestamp_end": chunk.get("timestamp_end"),
+                    }.items() if v is not None
                 }
                 for chunk in chunks
             ],

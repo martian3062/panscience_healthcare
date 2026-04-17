@@ -36,8 +36,24 @@ def _load_sentence_transformer(model_name: str):
 
 
 def embed_texts(texts: list[str], model_name: str) -> list[list[float]]:
-    model = _load_sentence_transformer(model_name)
-    if model is None:
-        return [_hash_embed(text) for text in texts]
-    embeddings = model.encode(texts, normalize_embeddings=True)
-    return embeddings.tolist()
+    try:
+        from app.config import get_settings
+        settings = get_settings()
+        if settings.hf_token:
+            import httpx
+            api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
+            headers = {"Authorization": f"Bearer {settings.hf_token}"}
+            response = httpx.post(api_url, headers=headers, json={"inputs": texts}, timeout=30)
+            if response.status_code == 200:
+                return response.json()
+    except Exception:
+        pass
+
+    try:
+        model = _load_sentence_transformer(model_name)
+        if model is not None:
+            return model.encode(texts, normalize_embeddings=True).tolist()
+    except Exception:
+        pass
+
+    return [_hash_embed(text) for text in texts]

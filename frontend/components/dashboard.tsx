@@ -151,9 +151,53 @@ export function Dashboard() {
   const [ttsProgress, setTtsProgress] = useState(0);
   const [activeChunkId, setActiveChunkId] = useState<string | null>(null);
   const [ttsActiveCharIndex, setTtsActiveCharIndex] = useState(-1);
+  const [ttsCurrentSubtitle, setTtsCurrentSubtitle] = useState("");
   const ttsBoundariesRef = useRef<{ id: string; start: number; end: number }[]>([]);
   const ttsPayloadRef = useRef<{ text: string; type: "text" | "document" }>({ text: "", type: "text" });
   const ttsStartIndexRef = useRef<number>(0);
+  
+  const [isRecording, setIsRecording] = useState(false);
+
+  function startVoiceRecording() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRec();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    let finalTranscript = "";
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setQuestion(""); // clear question before speaking
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      setQuestion(finalTranscript + interimTranscript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech error", event);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.start();
+  }
 
   const selectedFile = useMemo(
     () => files.find((item) => item.id === selectedFileId) ?? null,
@@ -401,6 +445,16 @@ export function Dashboard() {
       setTtsProgress((absoluteCharIdx / (totalLen || 1)) * 100);
       setTtsActiveCharIndex(absoluteCharIdx);
       
+      let sIdx = absoluteCharIdx;
+      while (sIdx > 0 && !/[.!?\n]/.test(fullText[sIdx - 1])) sIdx--;
+      while (sIdx < fullText.length && /\s/.test(fullText[sIdx])) sIdx++;
+      
+      let eIdx = absoluteCharIdx;
+      while (eIdx < fullText.length && !/[.!?\n]/.test(fullText[eIdx])) eIdx++;
+      if (eIdx < fullText.length) eIdx++;
+      
+      setTtsCurrentSubtitle(fullText.substring(sIdx, eIdx).trim());
+      
       if (ttsPayloadRef.current.type === "document") {
         const match = ttsBoundariesRef.current.find(b => absoluteCharIdx >= b.start && absoluteCharIdx <= b.end);
         if (match) {
@@ -418,6 +472,7 @@ export function Dashboard() {
       setTtsProgress(0);
       setActiveChunkId(null);
       setTtsActiveCharIndex(-1);
+      setTtsCurrentSubtitle("");
     };
     
     utterance.onend = handleStop;
@@ -470,7 +525,7 @@ export function Dashboard() {
       await deleteFile(activeFile.id);
       setActiveFile(null);
       setSelectedFileId("");
-      await loadFiles();
+      await refreshFiles();
     } catch (err) {
       if (err instanceof Error) setError(err.message);
     } finally {
@@ -808,7 +863,7 @@ export function Dashboard() {
                       />
                     ) : null}
 
-                    {selectedFile.media_type === "pdf" || selectedFile.media_type === "text" || selectedFile.media_type === "docx" ? (
+                    {selectedFile.media_type === "pdf" || selectedFile.media_type === "text" ? (
                       <div className="flex items-center gap-4 py-4">
                         <a
                           className="inline-link m-0"
@@ -886,10 +941,21 @@ export function Dashboard() {
                     onChange={(event) => setQuestion(event.target.value)}
                   />
 
-                  <Button onClick={() => void handleAsk()} disabled={busy || !question.trim()}>
-                    {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                    {busy ? "Searching..." : "Ask question"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={() => void handleAsk()} disabled={busy || !question.trim()} className="flex-1">
+                      {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      {busy ? "Searching..." : "Ask question"}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={startVoiceRecording} 
+                      className={`shrink-0 transition-colors ${isRecording ? "bg-red-50 text-red-500 border-red-200 dark:bg-red-900/20 dark:border-red-900" : ""}`}
+                      aria-label="Dictate question"
+                      title="Speak question"
+                    >
+                      <Mic2 className={`h-4 w-4 ${isRecording ? "animate-pulse" : ""}`} />
+                    </Button>
+                  </div>
 
                   <div className="answer-panel">
                     <div className="answer-head">
@@ -958,9 +1024,15 @@ export function Dashboard() {
                           <div key={item.id} className="history-row">
                             <div className="history-row-top">
                               <p>{item.question}</p>
-                              <Badge>{item.provider}</Badge>
+                              <div className="flex items-center gap-2">
+                                <Badge>{item.provider}</Badge>
+                                <button onClick={(e) => speakText(e, item.answer)} className="text-xs font-medium text-blue-500 hover:text-blue-400 flex items-center gap-1 transition-colors">
+                                  <Volume2 className="h-3 w-3" />
+                                  Read
+                                </button>
+                              </div>
                             </div>
-                            <span>{item.answer}</span>
+                            <span className="whitespace-pre-wrap">{item.answer}</span>
                           </div>
                         ))
                       )}
@@ -1067,15 +1139,29 @@ export function Dashboard() {
       {error ? <div className="floating-error">{error}</div> : null}
 
       {ttsState !== "stopped" && (
-        <div className="fixed bottom-6 right-6 bg-[var(--mission-panel-glass)] backdrop-blur-xl p-4 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-[var(--mission-panel-border)] flex flex-col gap-3 w-72 z-[100] animate-in slide-in-from-bottom-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Now Reading</span>
-            <button onClick={() => { window.speechSynthesis.cancel(); setTtsState("stopped"); setActiveChunkId(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
-              <Square className="h-4 w-4" />
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black/95 backdrop-blur-md p-6 rounded-2xl shadow-[0_0_50px_rgba(32,145,208,0.2)] border border-gray-800 flex flex-col gap-4 w-[800px] max-w-[95vw] z-[100] animate-in slide-in-from-bottom-10" style={{ boxShadow: "inset 0 0 30px rgba(255,255,255,0.02)" }}>
+          {/* TV Screen Visualization */}
+          <div className="bg-[#050505] rounded-xl p-6 min-h-[140px] flex items-center justify-center border border-gray-800/80 shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] relative overflow-hidden">
+            {/* Subtle scanline effect */}
+            <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
+            <div className="absolute inset-0 pointer-events-none opacity-20" style={{ background: "radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.8) 100%)" }} />
+            
+            <p className="text-xl md:text-2xl text-center font-medium leading-relaxed tracking-wide text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] z-10 transition-all duration-200">
+              {ttsCurrentSubtitle || "Preparing audio stream..."}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between mt-1 px-1">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              Live Playback
+            </span>
+            <button onClick={() => { window.speechSynthesis.cancel(); setTtsState("stopped"); setActiveChunkId(null); setTtsCurrentSubtitle(""); }} className="text-gray-400 hover:text-red-500 transition-colors p-1" title="Stop">
+              <Square className="h-5 w-5 fill-current" />
             </button>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 bg-gray-900/50 p-3 rounded-xl border border-gray-800/50">
             <button 
               onClick={() => {
                 if (ttsState === "playing") {
@@ -1086,19 +1172,21 @@ export function Dashboard() {
                   setTtsState("playing");
                 }
               }}
-              className="w-10 h-10 flex items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full transition-colors shrink-0"
+              className="w-12 h-12 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-500 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(37,99,235,0.4)] shrink-0"
+              title={ttsState === "playing" ? "Pause" : "Play"}
             >
-              {ttsState === "playing" ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-1" />}
+              {ttsState === "playing" ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 ml-1 fill-current" />}
             </button>
             
-            <div className="flex-1 w-full">
+            <div className="flex-1 w-full flex items-center gap-3">
+              <span className="text-xs text-gray-500 font-mono w-10 text-right">{Math.round(ttsProgress)}%</span>
               <input 
                 type="range" 
                 min="0" 
                 max="100" 
                 value={ttsProgress} 
                 onChange={handleSliderSeek}
-                className="w-full h-2 bg-[var(--mission-panel-border)] rounded-lg appearance-none cursor-pointer accent-[var(--mission-accent)]" 
+                className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
               />
             </div>
           </div>
