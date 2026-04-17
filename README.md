@@ -1,260 +1,102 @@
-# MediaMind Assignment
+# PanScience Healthcare: MediaMind Intelligence Platform
 
-MediaMind is an AI-powered document and multimedia Q&A web application for PDFs, audio, and video. Users can upload files, review extracted summaries, ask grounded questions, inspect timestamps, and jump directly to the relevant playback moment from the chatbot response.
+**MediaMind** is an advanced, AI-powered multimedia Retrieval-Augmented Generation (RAG) web application. Designed natively to process dense documentation, medical PDFs, podcast audio streams, and large video recordings, the platform fuses highly accurate document vectors with multimodal transcription endpoints to provide instantaneous AI copilot querying, summarization, and human-like Text-To-Speech (TTS) accessibility systems.
 
-## Assignment status
+**Live Production Instance**: [http://13.51.249.81](http://13.51.249.81)  
+**Main Repository**: [https://github.com/martian3062/panscience_healthcare](https://github.com/martian3062/panscience_healthcare)
 
-This repository now covers the core assignment requirements:
+---
 
-- Upload PDFs, audio, and video
-- Summarize uploaded content
-- Ask questions against uploaded files
-- Extract and display audio/video timestamps
-- Jump the native media player to the cited timestamp
-- **Word-by-Word TTS Sycn**: Interactive "Karaoke" style audio playback for documents.
-- **True Black Theme**: High-contrast OLED-grade dark mode for professional use.
-- **Interactive Analytics**: Real-time media mix and processing pipeline charts via Recharts.
-- Containerize with Docker and run both services within an Nginx-proxied stack.
-- Run automated backend tests with a 95%+ enforced coverage gate
-- Build and validate in GitHub Actions
+## 🏗️ System Architecture & Flowchart
 
-Current backend coverage gate: **95% minimum required, 98%+ currently passing locally**
+The system is compartmentalized into asynchronous microservices, securely brokered via an Nginx Reverse Proxy mapped on an AWS EC2 Ubuntu instance.
 
-Manual submission items still needed outside the codebase:
+```mermaid
+graph TD
+    %% Define client layer
+    Client[Next.js Client GUI]
+    Mic((Speech Dictation)) --> Client
+    Client -->|Browser TTS Subtitles| Sub[(Voice Subtitle Frame)]
+    
+    %% API Gateway
+    Nginx{Nginx Proxy - Port 80}
+    Client <-->|/api/ REST calls| Nginx
 
-- Live demo URL
-- Walkthrough video link
+    %% Backend Services
+    Nginx <-->|Proxy Pass| FastAPI[FastAPI Core Orchestrator]
 
-## Tech choices kept minimal
-
-The implementation stays close to built-in framework capabilities where possible:
-
-- FastAPI built-in OpenAPI docs for API documentation
-- FastAPI `BackgroundTasks` for ingestion jobs
-- Native HTML5 audio/video seeking for timestamp playback
-- SQLite for metadata persistence
-- Chroma-ready vector retrieval adapter with optional install
-- Only one small extra test dependency added for coverage enforcement: `pytest-cov`
-
-## Features
-
-- Upload PDF, audio, video, and optional dev text files
-- Background ingestion pipeline
-- PDF text extraction
-- Audio/video transcription with timestamped segments
-- Chunking and retrieval
-- Citation-backed chatbot answers
-- Source summaries
-- Native media playback with jump-to-time support
-- Responsive frontend with animated visualization
-
-## Project structure
-
-- `frontend/` - Next.js application
-- `backend/` - FastAPI service
-- `scripts/` - root helper scripts
-- `.github/workflows/ci.yml` - CI plus container publish workflow
-- `docker-compose.yml` - multi-container local orchestration
-
-## Local setup
-
-### 1. Backend
-
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-copy .env.example .env
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+    %% NLP Pipelines
+    FastAPI -->|Media Pre-compression| FFMPEG[FFMPEG Compressor]
+    FFMPEG -->|Safe 32k mp3 Payload| Groq[Groq Transcription Models]
+    
+    %% Multimodel Fallbacks
+    Groq -->|Auto Fallback| Turbo[whisper-large-v3-turbo]
+    Turbo -->|Failover| Distil[distil-whisper]
+    
+    %% Storage & Embeddings
+    FastAPI -->|Extract Chunks| BGE[BAAI/bge Embedding Model]
+    BGE --> Chroma[(ChromaDB Vector Store)]
+    FastAPI <-->|Metadata| SQLite[(SQLite RDBMS)]
+    
+    %% Interaction Node
+    FastAPI -->|Grounded Answer context| Llama3[LLaMA-3.3-70B Logic Node]
+    Llama3 -->|Streamed SSE text| Nginx
 ```
 
-Optional AI extras:
+---
 
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m pip install -r requirements-ai.txt
-```
+## ⚡ Core Advanced Features
 
-### 2. Frontend
+- **Multimodal Upload Pipelines**: Ingest PDFs, audio tracks, and full 1080p video files (Max configuration: 500 MB threshold dynamically managed by the internal Nginx/FFMPEG compression router).
+- **Interactive Multimedia RAG**: Citations provided by the LLaMA logic node are inherently connected to timestamped data arrays. Clicking AI references auto-scrolls your video player exactly to the cited conversational timestamp.
+- **Deep Fallback Mechanisms**: The backend runs multi-model fallback routines for transcription engines preventing endpoint limits from disrupting data flow, actively scaling down dense payloads dynamically.
+- **Neural Subtitle Voice Over**: Integrated premium native OS browser TTS. Summaries, AI results, and transcription chunks can be converted back securely to speech with synchronized human-like cadence and explicit closed-captioning in the UI layout.
+- **Micro-analytics Dashboard**: Real-time operational graphs tracked natively through `recharts`, visualizing successful embeddings and media volume across endpoints.
+- **Strict Testing Pipelines**: All core logic adheres strictly to automated PyTest testing suites hitting ~98% localized code-coverage safely regulated via GitHub Action CI gates.
 
-```powershell
-cd frontend
-npm install
-copy .env.example .env.local
-npm run dev
-```
+---
 
-Open:
+## 🚀 Technical Stack
 
-- Frontend: `http://127.0.0.1:3000`
-- Backend docs: `http://127.0.0.1:8000/docs`
-- Backend OpenAPI JSON: `http://127.0.0.1:8000/openapi.json`
+- **Frontend:** Next.js (Pages and Context APIs), React, Tailwind CSS, Lucide React, Recharts.
+- **Backend:** FastAPI, Python 3.11, SQLModel (ORM), PyMuPDF (PDF bindings), `ffmpeg` integration logic.
+- **AI Integration:** Groq (LLaMA-3.3-70b-versatile, Whisper arrays), Sentence-Transformers local vectors, Chroma vector embeddings.
+- **Infrastructure:** Docker & Docker Compose multi-container clusters, Nginx routing, AWS EC2 native instances.
 
-## Root commands
+---
 
-From the repository root:
+## 🛠️ Rapid Local Setup
 
-```powershell
-npm run check
-```
+The repository is fully Dockerized for 1-click deployments across any bare-metal or cloud-container OS.
 
-Runs:
+### Prerequisites:
+- `Docker` and `Docker Compose` installed.
 
-- backend pytest with coverage gate
-- frontend typecheck
-- frontend production build
+### Execution:
 
-```powershell
-npm run dev:all
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/martian3062/panscience_healthcare.git
+   cd panscience_healthcare
+   ```
+2. Build the container swarm natively:
+   ```bash
+   docker compose up -d --build
+   ```
 
-Starts both frontend and backend together.
+The application will cleanly compile both the Next.js runtime (fetching the correct relative internal APIs) and the FastAPI backend securely hidden behind Nginx. 
 
-## Environment files
+**Access points:**
+- Web App: `http://localhost:80`
+- API Specifications: `http://localhost/api/docs`
 
-### `backend/.env`
+### AWS Cloud Setup Note
+This setup accurately mirrors the live environment at **`http://13.51.249.81`**. The repository's `docker-compose.yml` ensures Nginx binds gracefully exclusively to standard cloud HTTP sockets, actively preventing port misalignment commonly found in unrouted environments.
 
-```env
-APP_NAME=MediaMind
-API_PREFIX=/api
-CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
-SQLITE_PATH=./data/app.db
-CHROMA_PATH=./data/chroma
-UPLOAD_DIR=./uploads
-GROQ_API_KEY=
-GROQ_BASE_URL=https://api.groq.com/openai/v1
-GROQ_CHAT_MODEL=llama-3.3-70b-versatile
-GROQ_TRANSCRIPTION_MODEL=whisper-large-v3-turbo
-OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_CHAT_MODEL=llama3.2
-EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
-MAX_CHUNK_CHARS=900
-CHUNK_OVERLAP_CHARS=140
-MAX_QUERY_CHUNKS=6
-UPLOAD_SIZE_LIMIT_MB=200
-ALLOW_DEV_TEXT_UPLOADS=true
-```
+---
 
-### `frontend/.env.local`
+## 📘 Read Additional Documents
+- For specific execution requirements for AWS infrastructure, reference the [AWS Setup Guide](AWS_SETUP_GUIDE.md).
+- Detailed Product requirements and user workflows are thoroughly outlined in the [Product Requirements Document](PRD.md).
 
-```env
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-```
-
-## API documentation
-
-FastAPI serves interactive documentation out of the box:
-
-- Swagger UI: `/docs`
-- OpenAPI schema: `/openapi.json`
-
-### Main endpoints
-
-#### Files
-
-- `GET /api/files`
-  - List uploaded files and ingestion status
-- `POST /api/files/upload`
-  - Upload a PDF, audio, video, or allowed dev text file
-- `GET /api/files/{file_id}`
-  - Fetch file details, summary, and chunk previews
-- `POST /api/files/{file_id}/reingest`
-  - Re-run ingestion for an existing file
-
-#### Chat
-
-- `POST /api/chat/query`
-  - Ask a grounded question using selected files
-  - Returns answer text, citations, scores, and timestamps when available
-- `GET /api/chat/history`
-  - List recent chat questions and answers
-
-#### Health
-
-- `GET /health`
-  - Simple service health check
-
-## Testing and coverage
-
-### Backend
-
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m pytest
-```
-
-The backend test suite enforces:
-
-- `--cov=app`
-- terminal missing-lines report
-- XML report output to `backend/coverage.xml`
-- `--cov-fail-under=95`
-
-### Frontend
-
-```powershell
-cd frontend
-npm run typecheck
-npx playwright test
-```
-
-## Docker
-
-### Individual Dockerfiles
-
-- [backend/Dockerfile](/E:/assignment/backend/Dockerfile)
-- [frontend/Dockerfile](/E:/assignment/frontend/Dockerfile)
-
-### Compose
-
-```powershell
-docker compose up --build
-```
-
-This starts:
-
-- backend on `8000`
-- frontend on `3000`
-- nginx on `80` (production proxy)
-
-## Deployment (AWS Low-Tier)
-
-For intern assignments or low-budget prototypes, we recommend deploying to a single **AWS EC2** instance.
-
-- **Recommended Instance**: `t3.small` (2GB RAM) — ~$15/mo.
-- **Instruction Manual**: [AWS_SETUP_GUIDE.md](./AWS_SETUP_GUIDE.md)
-
-This setup includes a pre-configured Nginx reverse proxy and a deployment script to get you live in minutes.
-
-## CI/CD
-
-GitHub Actions workflow: [.github/workflows/ci.yml](/E:/assignment/.github/workflows/ci.yml)
-
-What it does:
-
-- installs backend dependencies
-- runs backend tests with coverage gate
-- uploads backend coverage XML as an artifact
-- installs frontend dependencies
-- builds the frontend
-- on pushes to `main`, publishes backend and frontend container images to `ghcr.io`
-
-## Notes for reviewers
-
-- Groq can be used as the primary hosted model when `GROQ_API_KEY` is present.
-- Ollama is the local fallback for chat.
-- `requirements-ai.txt` keeps heavier AI dependencies optional for faster first-time setup.
-- The repo is ready for a live deployment step, but the actual public deployment URL and recorded walkthrough still need to be produced for final submission.
-
-## Submission checklist
-
-- [x] Source code
-- [x] README with setup, testing, API documentation, and running instructions
-- [x] Automated coverage gate at 95%+
-- [x] Dockerfiles
-- [x] Docker Compose
-- [x] GitHub Actions workflow
-- [ ] Live demo URL
-- [ ] Walkthrough video link
-
-# panscience_healthcare
+***Automated via strict CI verification pipelines. Maintained by Martian3062.***

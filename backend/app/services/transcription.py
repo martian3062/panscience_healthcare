@@ -42,18 +42,73 @@ def _transcribe_with_groq(path: str, settings: Settings) -> list[dict[str, Any]]
     if not settings.groq_api_key:
         return None
 
+    import subprocess
+    import os
+    
+    file_to_upload = path
+    file_size_bytes = Path(path).stat().st_size
+    
+    # Groq imposes a strict 25MB limit. If file is >20MB, compress it via ffmpeg.
+    compressed_path = None
+    if file_size_bytes > 20 * 1024 * 1024:
+        compressed_path = Path(path).with_suffix(".compressed.mp3")
+        subprocess.run(["ffmpeg", "-y", "-i", path, "-b:a", "32k", str(compressed_path)], capture_output=True)
+        if compressed_path.exists() and compressed_path.stat().st_size > 0:
+            file_to_upload = str(compressed_path)
+
     url = f"{settings.groq_base_url.rstrip('/')}/audio/transcriptions"
-    with open(path, "rb") as audio_file:
-        files = {"file": (Path(path).name, audio_file, "application/octet-stream")}
-        data = {
-            "model": settings.groq_transcription_model,
-            "response_format": "verbose_json",
-            "timestamp_granularities[]": "segment",
-        }
-        headers = {"Authorization": f"Bearer {settings.groq_api_key}"}
-        response = httpx.post(url, headers=headers, data=data, files=files, timeout=120)
-        response.raise_for_status()
-        payload = response.json()
+    
+    # Multimodel fallback approach to ensure robustness
+    models_to_try = [
+        settings.groq_transcription_model,
+        "whisper-large-v3-turbo",
+        "distil-whisper-large-v3-en",
+        "whisper-large-v3"
+    ]
+    
+    # Deduplicate models preserving order
+    unique_models = []
+    for m in models_to_try:
+        if m and m not in unique_models:
+            unique_models.append(m)
+
+    payload = None
+    last_err = None
+
+    try:
+        for model_name in unique_models:
+            try:
+                with open(file_to_upload, "rb") as audio_file:
+                    files = {"file": (Path(file_to_upload).name, audio_file, "audio/mpeg" if file_to_upload.endswith(".mp3") else "application/octet-stream")}
+                    data = {
+                        "model": model_name,
+                        "response_format": "verbose_json",
+                        # Removed timestamp_granularities[] which causes 400 Bad Request on some Groq endpoints
+                    }
+                    headers = {"Authorization": f"Bearer {settings.groq_api_key}"}
+                    response = httpx.post(url, headers=headers, data=data, files=files, timeout=300)
+                    response.raise_for_status()
+                    payload = response.json()
+                    break # Success, exit the fallback loop
+            except httpx.HTTPStatusError as e:
+                last_err = e
+                continue # Model failed, try the next fallback model
+            except httpx.RequestError as e:
+                last_err = e
+                continue
+
+        if payload is None:
+            if last_err and hasattr(last_err, 'response'):
+                raise RuntimeError(f"All Groq fallback models failed. Last error: {last_err.response.text}")
+            raise last_err or RuntimeError("All Groq fallback models failed without specific errors.")
+
+    finally:
+        if compressed_path and compressed_path.exists():
+            try:
+                os.remove(compressed_path)
+            except Exception:
+                pass
+
     return payload.get("segments") or []
 
 

@@ -434,6 +434,21 @@ export function Dashboard() {
     const utterance = new SpeechSynthesisUtterance(remainingText);
     const totalLen = fullText.length;
     
+    // Choose a high-quality human-like voice if the browser supports it
+    const voices = window.speechSynthesis.getVoices();
+    const premiumVoice = voices.find(v => 
+      v.name.includes('Natural') || 
+      v.name.includes('Premium') || 
+      v.name.includes('Neural') || 
+      v.name.includes('Google US English')
+    ) || voices.find(v => v.lang.startsWith('en-'));
+    
+    if (premiumVoice) utterance.voice = premiumVoice;
+    
+    // A slightly slower rate and balanced pitch mimics natural conversational pauses
+    utterance.rate = 0.92;
+    utterance.pitch = 1.0;
+    
     utterance.onstart = () => {
       setTtsState("playing");
       setTtsProgress((offset / (totalLen || 1)) * 100);
@@ -834,9 +849,17 @@ export function Dashboard() {
                     </div>
 
                     <div className="summary-panel">
-                      <div className="summary-head">
-                        <Sparkles className="mission-accent-icon h-4 w-4" />
-                        <span>Summary</span>
+                      <div className="summary-head flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="mission-accent-icon h-4 w-4" />
+                          <span>Summary</span>
+                        </div>
+                        {activeFile.summary && (
+                          <button onClick={(e) => speakText(e, activeFile.summary as string)} className="text-xs font-medium text-blue-500 hover:text-blue-400 flex items-center gap-1 transition-colors">
+                            <Volume2 className="h-3 w-3" />
+                            Read Summary
+                          </button>
+                        )}
                       </div>
                       <p>{activeFile.summary || activeFile.error || "This source is still processing."}</p>
                     </div>
@@ -863,23 +886,21 @@ export function Dashboard() {
                       />
                     ) : null}
 
-                    {selectedFile.media_type === "pdf" || selectedFile.media_type === "text" ? (
-                      <div className="flex items-center gap-4 py-4">
-                        <a
-                          className="inline-link m-0"
-                          href={assetUrl(activeFile.media_url)}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Open original file
-                          <ArrowUpRight className="h-4 w-4" />
-                        </a>
-                        <button onClick={speakDocument} className="text-sm font-medium text-blue-500 hover:text-blue-400 flex items-center gap-1 transition-colors">
-                          <Volume2 className="h-4 w-4" />
-                          Read Document Aloud
-                        </button>
-                      </div>
-                    ) : null}
+                    <div className="flex items-center gap-4 py-4">
+                      <a
+                        className="inline-link m-0"
+                        href={assetUrl(activeFile.media_url)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open original file
+                        <ArrowUpRight className="h-4 w-4" />
+                      </a>
+                      <button onClick={speakDocument} className="text-sm font-medium text-blue-500 hover:text-blue-400 flex items-center gap-1 transition-colors">
+                        <Volume2 className="h-4 w-4" />
+                        Read Document Aloud
+                      </button>
+                    </div>
 
                     <div className="chunk-panel">
                       <div className="chunk-panel-head">
